@@ -1,0 +1,6 @@
+Member ID,Member Name,Role,Skills,Email,Availability Status
+A1,ProjectManager,Project Manager,Project Management,pm@example.com,Active
+A2,SoftwareArch,Software Architect,Python, Java, C++,sa@example.com,Active
+A3,FrontendDev,Frontend Developer,React, Vue, Angular,fd@example.com,Active
+A4,BackendDev,Backend Developer,Node.js, Django, Ruby on Rails,bd@example.com,Active
+A5,DataEngineer,Data Engineer,SQL, NoSQL, Big Data,de

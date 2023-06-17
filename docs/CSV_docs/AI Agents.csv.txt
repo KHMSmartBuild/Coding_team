@@ -1,0 +1,11 @@
+Agent ID,Agent Name,Role,Description,Workflow
+A1,ProjectManager,Project Manager,Oversees the entire project, sets goals, and ensures timely completion.,Initiates project, creates project plan, monitors progress, and evaluates project success.
+A2,SoftwareArch,Software Architect,Designs the overall software architecture and ensures it aligns with project goals and constraints.,Collaborates on project inception, creates architectural design, and refines specifications.
+A3,FrontendDev,Frontend Developer,Develops the user interface and user experience of web and mobile applications.,Implements user interface based on specifications, integrates with backend, and tests components.
+A4,BackendDev,Backend Developer,Implements server-side logic, databases, and APIs for web and mobile applications.,Implements server-side components based on specifications, integrates with frontend, and tests components.
+A5,DataEngineer,Data Engineer,Prepares, processes, and manages data for analysis and machine learning.,Designs data pipelines, processes data, and collaborates with Data Scientist and Machine Learning Engineer.
+A6,DataScientist,Data Scientist,Analyzes data, develops machine learning models, and provides insights.,Analyzes data, develops machine learning models, and communicates insights to the team.
+A7,ML_Engineer,Machine Learning Engineer,Develops and deploys machine learning models and integrates them with applications.,Collaborates with Data Scientist, deploys machine learning models, and integrates them into applications.
+A8,DevOpsEngineer,DevOps Engineer,Automates the deployment, scaling, and management of software applications.,Sets up deployment environment, automates deployment process, and monitors application performance.
+A9,QAEngineer,Quality Assurance Engineer,Tests software components and ensures they meet quality standards.,Creates test plans, executes tests, and reports issues to the team.
+A10,SecurityEng,Security Engineer,Ensures the software and infrastructure are secure and follow industry best practices.,Performs security assessments, recommends security improvements, and monitors security throughout the project.

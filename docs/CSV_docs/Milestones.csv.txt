@@ -1,0 +1,5 @@
+Milestone ID,Milestone Name,Milestone Description,Project ID,Start Date,End Date (estimated),Status
+M1,UI Design,Complete the user interface design for the mobile app,P1,2023-05-01,2023-05-07,Not Started
+M2,Frontend Development,Complete the frontend development for the mobile app,P1,2023-05-08,2023-05-30,Not Started
+M3,Backend Development,Complete the backend development for the mobile app,P1,2023-06-01,2023-06-22,Not Started
+M4,Integration,Integrate the frontend and backend of the mobile app,P1,2023-06-23,2023-06-30,Not Started

@@ -1,0 +1,30 @@
+# my_library/__init__.py
+
+# Import Agent classes
+from Agents.A1_Project_Manager import Agent_Project_Manager
+from Agents.A2_Software_Architect import Agent_Software_Architect
+from Agents.A3_Frontend_Developer import Agent_Frontend_Developer
+from Agents.A4_Backend_Developer import Agent_Backend_Developer
+from Agents.A5_Data_Engineer import Agent_Data_Engineer
+from Agents.A6_Data_Scientist import Agent_Data_Scientist
+from Agents.A7_Machine_Learning_Engineer import Agent_Machine_Learning_Engineer
+from Agents.A8_DevOps_Engineer import Agent_DevOps_Engineer
+from Agents.A9_Quality_Assurance_Engineer import Agent_Quality_Assurance_Engineer
+from Agents.A10_Security_Engineer import Agent_Security_Engineer
+
+# Import task scripts
+from Agents.A1_Project_Manager import Change_Management, make_a_decision, Resource_Allocation, Risk_Analysis, Team_Collaboration
+from Agents.A2_Software_Architect import Bottleneck_Identification, Code_Quality_Analysis, System_Requirements_Analysis
+from Agents.A3_Frontend_Developer import Frontend_Test_Automation, Usability_Analysis
+from Agents.A4_Backend_Developer import Backend_Test_Automation, Database_Analysis
+from Agents.A5_Data_Engineer import Data_Pipeline_Implementation, Data_Validation
+from Agents.A6_Data_Scientist import Model_Implementation, Visualization_Creation
+from Agents.A7_Machine_Learning_Engineer import Model_Deployment_API, Model_Deployment_Integration, Model_Optimization
+from Agents.A8_DevOps_Engineer import Deployment_Automation, Monitoring_and_Alerting
+from Agents.A9_Quality_Assurance_Engineer import Test_Execution_and_Reporting, Test_Plan_Creation
+from Agents.A10_Security_Engineer import Security_Assessment, Security_Improvement_Recommendations
+
+# Import docs scripts
+from docs import agent_dataset_requirements, data_augmentation_script, Tasks_status
+
+# You can add more imports as needed

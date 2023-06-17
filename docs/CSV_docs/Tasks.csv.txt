@@ -1,0 +1,5 @@
+Task ID,Task Name,Task Description,Project ID,Assigned To,Task Type,Priority,Status,Start Date,End Date (estimated),Actual End Date,Dependencies
+T1,Design UI,Create the user interface design for the mobile app,P1,A3,Feature,High,Not Started,2023-05-01,2023-05-07,,T2
+T2,Develop frontend,Implement the frontend of the mobile app,P1,A3,Feature,High,Not Started,2023-05-08,2023-05-30,,T3
+T3,Develop backend,Implement the backend of the mobile app,P1,A4,Feature,High,Not Started,2023-06-01,2023-06-22,,T4
+T4,Integrate frontend and backend,Integrate the frontend and backend of the mobile app,P1,A3,Feature,High,Not Started,2023-06-23,2023-06-30,,

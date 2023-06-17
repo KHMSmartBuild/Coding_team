@@ -1,0 +1,3 @@
+Project ID,Project Name,Project Description,Start Date,End Date (estimated),Project Status,Repository URL
+P1,MyApp,Mobile application for task management,2023-05-01,2023-08-01,Not Started,https://github.com/user/myapp
+P2,WebApp,Web-based dashboard for data visualization,2023-09-01,2023-12-01,Not Started,https://github.com/user/webapp
