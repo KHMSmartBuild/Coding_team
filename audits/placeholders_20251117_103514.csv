@@ -1,0 +1,166 @@
+file,placeholder
+helpers/code_documentation.py,example is
+helpers/environment_setup.py,example is
+helpers/database_migration.py,example is
+helpers/log_analysis.py,example is
+helpers/code_formatting_and_linting.py,example is
+helpers/performance_profiling.py,example is
+helpers/unit_test_runner.py,example is
+helpers/api_testing.py,example is
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,Placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,Placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,Placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,Placeholder
+audits/generate_audit_report.py,Placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,placeholder
+audits/generate_audit_report.py,Placeholder
+audits/generate_audit_report.py,placeholder
+Agents/A6_Data_Scientist/Agent_Data_Scientist.py,Example Data
+Agents/A6_Data_Scientist/Agent_Data_Scientist.py,Example Machine
+Agents/A6_Data_Scientist/Agent_Data_Scientist.py,Example Insights
+Agents/A6_Data_Scientist/Agent_Data_Scientist.py,Example usage
+Agents/A6_Data_Scientist/Model_Implementation.py,placeholder
+Agents/A6_Data_Scientist/Model_Implementation.py,"example
+data"
+Agents/A6_Data_Scientist/Visualization_Creation.py,placeholder
+Agents/A6_Data_Scientist/Visualization_Creation.py,"example
+data"
+Agents/A6_Data_Scientist/Visualization_Creation.py,Example Bar
+Agents/A6_Data_Scientist/Visualization_Creation.py,Example Line
+Agents/A5_Data_Engineer/Data_Validation.py,placeholder
+Agents/A5_Data_Engineer/Data_Validation.py,"example
+validation_rules"
+Agents/A5_Data_Engineer/Data_Pipeline_Implementation.py,placeholder
+Agents/A5_Data_Engineer/Data_Pipeline_Implementation.py,"example
+data_sources"
+Agents/A5_Data_Engineer/Agent_Data_Engineer.py,Example Data
+Agents/A5_Data_Engineer/Agent_Data_Engineer.py,Example Processed
+Agents/A5_Data_Engineer/Agent_Data_Engineer.py,Example Collaboration
+Agents/A5_Data_Engineer/Agent_Data_Engineer.py,Example usage
+Agents/A2_Software_Architect/Bottleneck_Identification.py,"example
+bottleneck_identification"
+Agents/A2_Software_Architect/Agent_Software_Architect.py,Example Architecture
+Agents/A2_Software_Architect/Agent_Software_Architect.py,Example Specifications
+Agents/A2_Software_Architect/Agent_Software_Architect.py,Example usage
+Agents/A2_Software_Architect/Agent_Software_Architect.py,Example Goal
+Agents/A2_Software_Architect/Agent_Software_Architect.py,Example Constraint
+Agents/A2_Software_Architect/Agent_Software_Architect.py,Example Constraint
+Agents/A2_Software_Architect/Code_Quality_Analysis.py,"example
+code_directory"
+Agents/A1_Project_Manager/Change_Management.py,"example
+project_scope"
+Agents/A1_Project_Manager/Risk_Analysis.py,"example
+project_data"
+Agents/A1_Project_Manager/Risk_Analysis.py,None  # TODO
+Agents/A1_Project_Manager/Risk_Analysis.py,None  # TODO
+Agents/A1_Project_Manager/Risk_Analysis.py,None  # TODO
+Agents/A1_Project_Manager/Team_Collaboration.py,"example
+team_collaboration"
+Agents/A1_Project_Manager/Agent_Project_Manager.py,Example usage
+Agents/A1_Project_Manager/make_a_decision.py,"example
+decision_extraction"
+Agents/A1_Project_Manager/Resource_Allocation.py,"example
+tasks"
+Agents/A3_Frontend_Developer/Agent_Frontend_Developer.py,Example UI
+Agents/A3_Frontend_Developer/Agent_Frontend_Developer.py,Example Integration
+Agents/A3_Frontend_Developer/Agent_Frontend_Developer.py,Example Test
+Agents/A3_Frontend_Developer/Agent_Frontend_Developer.py,Example usage
+Agents/A3_Frontend_Developer/Agent_Frontend_Developer.py,Example Specifications
+Agents/A3_Frontend_Developer/Frontend_Test_Automation.py,Example usage
+Agents/A3_Frontend_Developer/Frontend_Test_Automation.py,Example frontend
+Agents/A3_Frontend_Developer/Frontend_Test_Automation.py,example usage
+Agents/A3_Frontend_Developer/Usability_Analysis.py,Example usage
+Agents/A9_Quality_Assurance_Engineer/Test_Plan_Creation.py,"example
+test_plan"
+Agents/A9_Quality_Assurance_Engineer/Test_Plan_Creation.py,Example Test
+Agents/A9_Quality_Assurance_Engineer/Test_Plan_Creation.py,example software
+Agents/A9_Quality_Assurance_Engineer/Test_Plan_Creation.py,Example Test
+Agents/A9_Quality_Assurance_Engineer/Test_Execution_and_Reporting.py,placeholder
+Agents/A9_Quality_Assurance_Engineer/Test_Execution_and_Reporting.py,"example
+class"
+Agents/A9_Quality_Assurance_Engineer/Agent_Quality_Assurance_Engineer.py,Example usage
+Agents/A7_Machine_Learning_Engineer/Model_Optimization.py,placeholder
+Agents/A7_Machine_Learning_Engineer/Model_Optimization.py,"example
+iris_data"
+Agents/A7_Machine_Learning_Engineer/Model_Deployment_Integration.py,placeholder
+Agents/A7_Machine_Learning_Engineer/Model_Deployment_Integration.py,"example
+iris_data"
+Agents/A7_Machine_Learning_Engineer/Agent_Machine_Learning_Engineer.py,Example usage
+Agents/A8_DevOps_Engineer/Monitoring_and_Alerting.py,placeholder
+Agents/A8_DevOps_Engineer/Monitoring_and_Alerting.py,placeholder
+Agents/A8_DevOps_Engineer/Monitoring_and_Alerting.py,"example
+services"
+Agents/A8_DevOps_Engineer/Agent_DevOps_Engineer.py,Example usage
+Agents/A8_DevOps_Engineer/Deployment_Automation.py,placeholder
+Agents/A8_DevOps_Engineer/Deployment_Automation.py,"example
+deployment_script"
+Agents/A10_Security_Engineer/Security_Assessment.py,placeholder
+Agents/A10_Security_Engineer/Security_Assessment.py,placeholder
+Agents/A10_Security_Engineer/Security_Assessment.py,"example
+targets"
+Agents/A10_Security_Engineer/Agent_Security_Engineer.py,Example usage
+Agents/A10_Security_Engineer/Security_Improvement_Recommendations.py,placeholder
+Agents/A10_Security_Engineer/Security_Improvement_Recommendations.py,"example
+risk_1"
+Agents/A4_Backend_Developer/Backend_Test_Automation.py,placeholder
+Agents/A4_Backend_Developer/Agent_Backend_Developer.py,Example Server
+Agents/A4_Backend_Developer/Agent_Backend_Developer.py,Example Integration
+Agents/A4_Backend_Developer/Agent_Backend_Developer.py,Example Test
+Agents/A4_Backend_Developer/Agent_Backend_Developer.py,Example usage
+Agents/A4_Backend_Developer/Agent_Backend_Developer.py,Example Specifications
+Agents/A4_Backend_Developer/Database_Analysis.py,Example usage
+Agents/A4_Backend_Developer/Database_Analysis.py,Example database
+Agents/A4_Backend_Developer/Database_Analysis.py,Example data
+Agents/A4_Backend_Developer/Database_Analysis.py,Example performance
