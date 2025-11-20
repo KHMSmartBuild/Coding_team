@@ -1,0 +1,29 @@
+# Coding_team Project Requirements
+
+# Testing
+pytest>=7.0.0
+pytest-cov>=4.0.0
+
+# Optional: for async tests
+pytest-asyncio>=0.21.0
+
+# Optional: for parallel test execution
+pytest-xdist>=3.0.0
+
+# Note: The following dependencies may be needed for full functionality
+# but are not included here to keep the minimal installation light:
+# 
+# For AI Agents:
+# langchain
+# openai
+# cohere
+# tiktoken
+#
+# For documentation generation:
+# sphinx
+# sphinx-rtd-theme
+#
+# For code formatting:
+# black
+# flake8
+# pylint
