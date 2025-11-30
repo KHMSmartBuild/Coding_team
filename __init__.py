@@ -1,30 +1,103 @@
-# my_library/__init__.py
+"""
+Coding Team - AI-Powered Software Development Framework.
 
-# Import Agent classes
-from Agents.A1_Project_Manager import Agent_Project_Manager
-from Agents.A2_Software_Architect import Agent_Software_Architect
-from Agents.A3_Frontend_Developer import Agent_Frontend_Developer
-from Agents.A4_Backend_Developer import Agent_Backend_Developer
-from Agents.A5_Data_Engineer import Agent_Data_Engineer
-from Agents.A6_Data_Scientist import Agent_Data_Scientist
-from Agents.A7_Machine_Learning_Engineer import Agent_Machine_Learning_Engineer
-from Agents.A8_DevOps_Engineer import Agent_DevOps_Engineer
-from Agents.A9_Quality_Assurance_Engineer import Agent_Quality_Assurance_Engineer
-from Agents.A10_Security_Engineer import Agent_Security_Engineer
+This package provides the foundational components for the AI-powered coding team,
+featuring 10 specialized AI agents for comprehensive software development tasks.
 
-# Import task scripts
-from Agents.A1_Project_Manager import Change_Management, make_a_decision, Resource_Allocation, Risk_Analysis, Team_Collaboration
-from Agents.A2_Software_Architect import Bottleneck_Identification, Code_Quality_Analysis, System_Requirements_Analysis
-from Agents.A3_Frontend_Developer import Frontend_Test_Automation, Usability_Analysis
-from Agents.A4_Backend_Developer import Backend_Test_Automation, Database_Analysis
-from Agents.A5_Data_Engineer import Data_Pipeline_Implementation, Data_Validation
-from Agents.A6_Data_Scientist import Model_Implementation, Visualization_Creation
-from Agents.A7_Machine_Learning_Engineer import Model_Deployment_API, Model_Deployment_Integration, Model_Optimization
-from Agents.A8_DevOps_Engineer import Deployment_Automation, Monitoring_and_Alerting
-from Agents.A9_Quality_Assurance_Engineer import Test_Execution_and_Reporting, Test_Plan_Creation
-from Agents.A10_Security_Engineer import Security_Assessment, Security_Improvement_Recommendations
+The package includes:
+    - Core: Dependency injection, LLM providers, and tool definitions
+    - Agents: 10 specialized AI agents for different development tasks
+    - Helpers: Utility functions for common operations
+    - Docs: Documentation and project tracking
 
-# Import docs scripts
-from docs import agent_dataset_requirements, data_augmentation_script, Tasks_status
+Example:
+    >>> from coding_team.core import Container, LLMConfig
+    >>> from coding_team.helpers import DtO, StrO
 
-# You can add more imports as needed
+Note:
+    Agent modules have optional dependencies (langchain, openai, etc.).
+    Core and helper modules work without these dependencies.
+
+TODO(docs): Add comprehensive API documentation
+TODO(feature): Add CLI interface for common operations
+"""
+
+__version__ = "0.2.0"
+__author__ = "KHMSmartBuild"
+
+# Core module imports (no external dependencies required)
+# NOTE: These are always available
+try:
+    from core.container import Container, ServiceLifetime, get_global_container
+    from core.llm_provider import LLMConfig, LLMProvider, LLMResponse, create_provider
+    from core.tools import Tool, ToolRegistry, ToolResult, get_default_tools
+except ImportError:
+    # Graceful fallback if core module not fully initialized
+    Container = None
+    LLMConfig = None
+    Tool = None
+
+# Helper imports (minimal dependencies)
+# NOTE: Always available
+try:
+    from helpers import DtO, FaDO, StrO, logging_config
+except ImportError:
+    DtO = None
+    FaDO = None
+    StrO = None
+
+# Lazy imports for Agent modules to avoid requiring langchain
+# NOTE: These modules have optional external dependencies
+# Use: from Agents.A1_Project_Manager import Agent_Project_Manager
+
+
+def get_agent_module(agent_name: str):
+    """Dynamically import an agent module.
+
+    This function provides lazy loading of agent modules to avoid
+    requiring external dependencies (like langchain) at import time.
+
+    Args:
+        agent_name: Name of the agent module (e.g., 'A1_Project_Manager').
+
+    Returns:
+        The imported agent module or None if import fails.
+
+    Example:
+        >>> pm = get_agent_module('A1_Project_Manager')
+        >>> if pm:
+        ...     pm.project_manager(tasks)
+    """
+    import importlib
+    try:
+        return importlib.import_module(f"Agents.{agent_name}")
+    except ImportError as e:
+        import logging
+        logging.warning(f"Could not import agent '{agent_name}': {e}")
+        return None
+
+
+__all__ = [
+    # Version info
+    "__version__",
+    "__author__",
+    # Core components
+    "Container",
+    "ServiceLifetime",
+    "get_global_container",
+    "LLMConfig",
+    "LLMProvider",
+    "LLMResponse",
+    "create_provider",
+    "Tool",
+    "ToolRegistry",
+    "ToolResult",
+    "get_default_tools",
+    # Helpers
+    "DtO",
+    "FaDO",
+    "StrO",
+    "logging_config",
+    # Utilities
+    "get_agent_module",
+]
