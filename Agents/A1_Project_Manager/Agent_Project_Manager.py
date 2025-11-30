@@ -34,7 +34,12 @@ from typing import Any, Dict, List, Optional
 # Add project root to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from helpers.logging_config import get_logger
+# Use standard logging with fallback
+try:
+    from helpers.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    logger = logging.getLogger(__name__)
 
 # NOTE: LLM imports are optional - graceful fallback if not available
 try:

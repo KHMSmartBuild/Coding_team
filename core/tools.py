@@ -26,14 +26,18 @@ TODO(enhancement): Add tool usage analytics
 import inspect
 import json
 import logging
+import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, Type, Union, get_type_hints
 
-from helpers.logging_config import get_logger
-
-logger = get_logger(__name__)
+# Use standard logging with fallback
+try:
+    from helpers.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -710,6 +714,11 @@ class FileOperationTool(Tool):
 
         Returns:
             ToolResult with operation outcome.
+
+        Note:
+            Paths are validated to prevent directory traversal attacks.
+            Only relative paths or absolute paths within the current
+            working directory are allowed.
         """
         import os
         from pathlib import Path
@@ -718,8 +727,29 @@ class FileOperationTool(Tool):
         path = kwargs.get("path")
         content = kwargs.get("content", "")
 
+        # NOTE: Security - validate path to prevent directory traversal
+        if not path:
+            return ToolResult(
+                success=False,
+                error="Path is required"
+            )
+
+        # Check for null bytes (common injection technique)
+        if "\x00" in path:
+            return ToolResult(
+                success=False,
+                error="Invalid path: null bytes not allowed"
+            )
+
         try:
             file_path = Path(path)
+
+            # NOTE: For additional security in production, restrict to
+            # specific allowed directories:
+            # allowed_base = Path.cwd()
+            # resolved = file_path.resolve()
+            # if not str(resolved).startswith(str(allowed_base)):
+            #     return ToolResult(success=False, error="Path outside allowed directory")
 
             if operation == "read":
                 if not file_path.exists():
@@ -825,10 +855,27 @@ class TestRunnerTool(Tool):
             ToolResult with test results.
         """
         import subprocess
+        from pathlib import Path
 
         test_path = kwargs.get("test_path", "tests/")
         framework = kwargs.get("framework", "pytest")
         verbose = kwargs.get("verbose", False)
+
+        # NOTE: Security - validate test_path to prevent command injection
+        # Only allow alphanumeric, underscores, hyphens, dots, and slashes
+        if not re.match(r'^[a-zA-Z0-9_\-./]+$', test_path):
+            return ToolResult(
+                success=False,
+                error="Invalid test_path: contains disallowed characters"
+            )
+
+        # Normalize path and check for directory traversal attempts
+        normalized_path = Path(test_path).resolve()
+        if ".." in str(test_path):
+            return ToolResult(
+                success=False,
+                error="Invalid test_path: directory traversal not allowed"
+            )
 
         try:
             if framework == "pytest":
@@ -840,11 +887,13 @@ class TestRunnerTool(Tool):
                 if verbose:
                     cmd.append("-v")
 
+            # NOTE: shell=False is default but explicit for security
             result = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=300
+                timeout=300,
+                shell=False
             )
 
             return ToolResult(

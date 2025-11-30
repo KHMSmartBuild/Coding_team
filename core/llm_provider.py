@@ -30,9 +30,12 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 
-from helpers.logging_config import get_logger
-
-logger = get_logger(__name__)
+# Use standard logging with fallback
+try:
+    from helpers.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    logger = logging.getLogger(__name__)
 
 
 @dataclass

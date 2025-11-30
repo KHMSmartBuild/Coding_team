@@ -368,8 +368,9 @@ class TestBuiltInTools:
     def test_code_analysis_style_check(self):
         """Test code analysis style checking."""
         tool = CodeAnalysisTool()
-        # Line longer than 79 chars
-        long_line = "x = " + "a" * 100
+        # Line longer than 79 chars (PEP8 max line length)
+        max_line_length = 79
+        long_line = "x = " + "a" * (max_line_length + 21)
         result = tool(code=long_line, checks=["style"])
 
         assert result.success is True
@@ -383,6 +384,22 @@ class TestBuiltInTools:
 
         assert result.success is True
         assert result.output is True
+
+    def test_file_operation_rejects_null_bytes(self):
+        """Test that file operation rejects paths with null bytes."""
+        tool = FileOperationTool()
+        result = tool(operation="exists", path="/tmp/test\x00file.txt")
+
+        assert result.success is False
+        assert "null bytes" in result.error.lower()
+
+    def test_file_operation_requires_path(self):
+        """Test that file operation requires a path."""
+        tool = FileOperationTool()
+        result = tool(operation="exists", path="")
+
+        assert result.success is False
+        assert "required" in result.error.lower()
 
     def test_file_operation_list(self):
         """Test file operation list."""

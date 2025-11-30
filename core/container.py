@@ -22,9 +22,12 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, Optional, Type, TypeVar, Generic
 
-from helpers.logging_config import get_logger
-
-logger = get_logger(__name__)
+# Use standard logging with fallback
+try:
+    from helpers.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    logger = logging.getLogger(__name__)
 
 T = TypeVar('T')
 
