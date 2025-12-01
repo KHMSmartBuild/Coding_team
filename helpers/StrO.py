@@ -52,6 +52,7 @@ def to_camel_case(s: str) -> str:
 
     Returns:
         The camelCase representation of the input string.
+        Returns an empty string if the input is empty or whitespace only.
 
     Example:
         >>> to_camel_case("hello_world")
@@ -60,6 +61,8 @@ def to_camel_case(s: str) -> str:
         'helloWorld'
         >>> to_camel_case("Hello World")
         'helloWorld'
+        >>> to_camel_case("")
+        ''
     """
     s = re.sub(r"(\s|_|-)+", " ", s)
     s = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1 \2", s)
@@ -81,12 +84,15 @@ def to_pascal_case(s: str) -> str:
 
     Returns:
         The PascalCase representation of the input string.
+        Returns an empty string if the input is empty.
 
     Example:
         >>> to_pascal_case("hello_world")
         'HelloWorld'
         >>> to_pascal_case("hello-world")
         'HelloWorld'
+        >>> to_pascal_case("")
+        ''
     """
     camel = to_camel_case(s)
     if not camel:

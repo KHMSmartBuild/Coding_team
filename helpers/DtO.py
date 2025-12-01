@@ -269,12 +269,14 @@ def end_of_day(dt: datetime) -> datetime:
         dt: The input datetime.
 
     Returns:
-        A datetime representing 23:59:59 of the same day.
+        A datetime representing the last moment of the day (23:59:59.999999).
+        The microsecond value ensures this is the absolute last instant before
+        midnight of the next day.
 
     Example:
         >>> from datetime import datetime
         >>> dt = datetime(2024, 1, 15, 14, 30)
         >>> end_of_day(dt)
-        datetime.datetime(2024, 1, 15, 23, 59, 59)
+        datetime.datetime(2024, 1, 15, 23, 59, 59, 999999)
     """
     return dt.replace(hour=23, minute=59, second=59, microsecond=999999)

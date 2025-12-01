@@ -585,14 +585,51 @@ class ExecuteCodeTool(Tool):
     """Tool for executing Python code.
 
     WARNING: This tool executes arbitrary code. Use with caution.
+    By default, only safe builtins are available.
 
     Example:
         >>> tool = ExecuteCodeTool()
-        >>> result = tool.execute(code="2 + 2")
+        >>> result = tool.execute(code="result = 2 + 2")
     """
 
-    def __init__(self):
-        """Initialize the ExecuteCodeTool."""
+    # Safe builtins that don't allow dangerous operations
+    SAFE_BUILTINS = {
+        "abs": abs,
+        "all": all,
+        "any": any,
+        "bool": bool,
+        "dict": dict,
+        "enumerate": enumerate,
+        "filter": filter,
+        "float": float,
+        "int": int,
+        "len": len,
+        "list": list,
+        "map": map,
+        "max": max,
+        "min": min,
+        "print": print,
+        "range": range,
+        "round": round,
+        "set": set,
+        "sorted": sorted,
+        "str": str,
+        "sum": sum,
+        "tuple": tuple,
+        "type": type,
+        "zip": zip,
+        "True": True,
+        "False": False,
+        "None": None,
+    }
+
+    def __init__(self, allow_unsafe: bool = False):
+        """Initialize the ExecuteCodeTool.
+
+        Args:
+            allow_unsafe: If True, allows access to all builtins.
+                WARNING: Only set this to True in trusted environments.
+        """
         super().__init__(
             name="execute_code",
             description="Execute Python code and return the result",
@@ -605,6 +642,7 @@ class ExecuteCodeTool(Tool):
                 ),
             ],
         )
+        self.allow_unsafe = allow_unsafe
 
     def execute(self, code: str, **kwargs: Any) -> Any:
         """Execute Python code.
@@ -614,14 +652,46 @@ class ExecuteCodeTool(Tool):
             **kwargs: Additional arguments (ignored).
 
         Returns:
-            The execution result.
+            The execution result (value of 'result' variable).
 
         Raises:
             Exception: If code execution fails.
+            ValueError: If code contains potentially dangerous operations.
         """
-        # Create a safe execution environment
+        # Check for potentially dangerous patterns when not in unsafe mode
+        if not self.allow_unsafe:
+            dangerous_patterns = [
+                "import ",
+                "__import__",
+                "exec(",
+                "eval(",
+                "compile(",
+                "open(",
+                "file(",
+                "__builtins__",
+                "__class__",
+                "__bases__",
+                "__subclasses__",
+                "globals(",
+                "locals(",
+                "getattr(",
+                "setattr(",
+                "delattr(",
+            ]
+            for pattern in dangerous_patterns:
+                if pattern in code:
+                    raise ValueError(
+                        f"Code contains potentially dangerous pattern: {pattern}"
+                    )
+
+        # Create execution environment
+        if self.allow_unsafe:
+            exec_globals = {"__builtins__": __builtins__}
+        else:
+            exec_globals = {"__builtins__": self.SAFE_BUILTINS}
+
         local_vars: Dict[str, Any] = {}
-        exec(code, {"__builtins__": __builtins__}, local_vars)
+        exec(code, exec_globals, local_vars)
         return local_vars.get("result", None)
 
 

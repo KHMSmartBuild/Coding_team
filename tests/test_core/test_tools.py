@@ -533,6 +533,21 @@ class TestBuiltInTools:
         result = tool.execute(code="result = 2 + 2")
         assert result == 4
 
+    def test_execute_code_tool_blocks_dangerous_patterns(self):
+        """Test ExecuteCodeTool blocks dangerous code patterns."""
+        tool = ExecuteCodeTool()
+
+        with pytest.raises(ValueError) as exc_info:
+            tool.execute(code="import os")
+        assert "dangerous" in str(exc_info.value).lower()
+
+    def test_execute_code_tool_unsafe_mode(self):
+        """Test ExecuteCodeTool in unsafe mode."""
+        tool = ExecuteCodeTool(allow_unsafe=True)
+        # In unsafe mode, dangerous patterns are allowed
+        result = tool.execute(code="result = len([1, 2, 3])")
+        assert result == 3
+
     def test_search_code_tool(self):
         """Test SearchCodeTool."""
         tool = SearchCodeTool()

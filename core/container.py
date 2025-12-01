@@ -219,11 +219,21 @@ class Container:
         elif descriptor.lifetime == ServiceLifetime.TRANSIENT:
             if descriptor.service_type is None:
                 raise ContainerError(f"Service type for '{name}' is not set")
-            return descriptor.service_type(**kwargs)
+            try:
+                return descriptor.service_type(**kwargs)
+            except TypeError as e:
+                raise ContainerError(
+                    f"Failed to instantiate transient service '{name}': {e}"
+                )
         elif descriptor.lifetime == ServiceLifetime.FACTORY:
             if descriptor.factory is None:
                 raise ContainerError(f"Factory for '{name}' is not set")
-            return descriptor.factory(**kwargs)
+            try:
+                return descriptor.factory(**kwargs)
+            except TypeError as e:
+                raise ContainerError(
+                    f"Failed to call factory for service '{name}': {e}"
+                )
 
         raise ContainerError(f"Unknown lifetime for service '{name}'")
 
