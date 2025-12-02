@@ -1,0 +1,85 @@
+{
+  "agent_id": "A001",
+  "agent_role": "Backend_Developer",
+  "evaluation_date": "2025-12-02T22:53:35.506925",
+  "overall_score": 91.75,
+  "performance_rating": "Excellent",
+  "threshold_checks": {
+    "success_rate": true,
+    "code_quality": true,
+    "test_coverage": true
+  },
+  "metrics": {
+    "performance": {
+      "agent_id": "A001",
+      "agent_role": "Backend_Developer",
+      "tasks_assigned": 20,
+      "tasks_completed": 18,
+      "tasks_in_progress": 1,
+      "tasks_failed": 1,
+      "average_task_completion_time": 3600,
+      "total_working_time": 0.0,
+      "success_rate": 90.0,
+      "on_time_delivery_rate": 85.0,
+      "evaluation_timestamp": "2025-12-02T22:53:35.506306"
+    },
+    "quality": {
+      "agent_id": "A001",
+      "agent_role": "Backend_Developer",
+      "code_review_score": 85.0,
+      "bug_count": 5,
+      "critical_bugs": 0,
+      "major_bugs": 2,
+      "minor_bugs": 3,
+      "test_coverage": 78.0,
+      "tests_passed": 95,
+      "tests_failed": 5,
+      "code_reviews_given": 12,
+      "code_reviews_received": 8,
+      "review_feedback_score": 8.5,
+      "security_vulnerabilities": 0,
+      "security_issues_resolved": 0,
+      "evaluation_timestamp": "2025-12-02T22:53:35.506310"
+    },
+    "productivity": {
+      "agent_id": "A001",
+      "agent_role": "Backend_Developer",
+      "lines_of_code_written": 5000,
+      "commits_made": 45,
+      "pull_requests_created": 15,
+      "pull_requests_merged": 14,
+      "story_points_completed": 25,
+      "features_delivered": 8,
+      "code_reuse_rate": 0.0,
+      "refactoring_rate": 0.0,
+      "documentation_coverage": 65.0,
+      "estimated_vs_actual_ratio": 1.0,
+      "evaluation_timestamp": "2025-12-02T22:53:35.506312"
+    },
+    "collaboration": {
+      "agent_id": "A001",
+      "agent_role": "Backend_Developer",
+      "messages_sent": 150,
+      "code_reviews_participated": 12,
+      "meetings_attended": 8,
+      "documentation_contributions": 10,
+      "knowledge_base_articles": 0,
+      "mentoring_sessions": 3,
+      "pair_programming_sessions": 5,
+      "blockers_resolved_for_others": 4,
+      "questions_answered": 20,
+      "responsiveness_score": 8.5,
+      "teamwork_score": 9.0,
+      "communication_clarity_score": 8.0,
+      "evaluation_timestamp": "2025-12-02T22:53:35.506314"
+    }
+  },
+  "strengths": [
+    "High task success rate",
+    "Excellent code quality",
+    "High PR merge rate",
+    "Excellent team collaboration",
+    "Low bug count"
+  ],
+  "areas_for_improvement": []
+}
