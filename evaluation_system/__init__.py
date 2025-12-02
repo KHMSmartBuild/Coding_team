@@ -11,6 +11,7 @@ from .metrics import (
     CollaborationMetrics
 )
 from .evaluation_report import EvaluationReport
+from .integration import AgentIntegration
 
 __all__ = [
     'AgentEvaluator',
@@ -19,5 +20,6 @@ __all__ = [
     'QualityMetrics',
     'ProductivityMetrics',
     'CollaborationMetrics',
-    'EvaluationReport'
+    'EvaluationReport',
+    'AgentIntegration'
 ]
