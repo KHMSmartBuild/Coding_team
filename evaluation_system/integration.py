@@ -95,9 +95,13 @@ class AgentIntegration:
                 current_avg = evaluator.performance_metrics.average_task_completion_time
                 completed = evaluator.performance_metrics.tasks_completed
                 
-                if completed > 0:
+                if completed > 1:
+                    # Calculate new average considering previous tasks
                     new_avg = ((current_avg * (completed - 1)) + completion_time) / completed
                     evaluator.update_performance_metrics(average_task_completion_time=new_avg)
+                elif completed == 1:
+                    # First completed task, set as the average
+                    evaluator.update_performance_metrics(average_task_completion_time=completion_time)
             
             # Recalculate success rate
             evaluator.performance_metrics.calculate_success_rate()

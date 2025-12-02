@@ -111,12 +111,20 @@ class AgentEvaluator:
         Calculate overall performance score (0-100)
         Weighted average of different metric categories
         """
+        # Scoring weights
         weights = {
             'performance': 0.30,
             'quality': 0.30,
             'productivity': 0.25,
             'collaboration': 0.15
         }
+        
+        # Productivity scoring constants
+        PR_MERGE_WEIGHT = 0.4
+        STORY_POINTS_MULTIPLIER = 2
+        DOCUMENTATION_WEIGHT = 0.4
+        BUG_PENALTY_MULTIPLIER = 2
+        COLLABORATION_SCALE = 10
         
         # Performance score
         performance_score = self.performance_metrics.success_rate
@@ -125,19 +133,19 @@ class AgentEvaluator:
         quality_components = [
             self.quality_metrics.code_review_score,
             self.quality_metrics.calculate_test_pass_rate(),
-            max(0, 100 - (self.quality_metrics.bug_count * 2))  # Penalty for bugs
+            max(0, 100 - (self.quality_metrics.bug_count * BUG_PENALTY_MULTIPLIER))  # Penalty for bugs
         ]
         quality_score = sum(quality_components) / len(quality_components)
         
         # Productivity score (normalized to 0-100)
         productivity_score = min(100, (
-            self.productivity_metrics.calculate_pr_merge_rate() * 0.4 +
-            self.productivity_metrics.story_points_completed * 2 +
-            self.productivity_metrics.documentation_coverage * 0.4
+            self.productivity_metrics.calculate_pr_merge_rate() * PR_MERGE_WEIGHT +
+            self.productivity_metrics.story_points_completed * STORY_POINTS_MULTIPLIER +
+            self.productivity_metrics.documentation_coverage * DOCUMENTATION_WEIGHT
         ))
         
         # Collaboration score (normalized to 0-100)
-        collaboration_score = self.collaboration_metrics.calculate_collaboration_score() * 10
+        collaboration_score = self.collaboration_metrics.calculate_collaboration_score() * COLLABORATION_SCALE
         
         # Calculate weighted overall score
         overall_score = (
