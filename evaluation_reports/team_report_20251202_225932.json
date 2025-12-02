@@ -1,0 +1,68 @@
+{
+  "team_name": "KHM Smart Build Coding Team",
+  "evaluation_date": "2025-12-02T22:59:32.814046",
+  "team_size": 5,
+  "overall_metrics": {
+    "team_performance_score": 88.46,
+    "team_success_rate": 91.53,
+    "team_quality_score": 76.33,
+    "team_velocity": 137
+  },
+  "productivity_metrics": {
+    "total_lines_of_code": 21200,
+    "total_commits": 200,
+    "total_pull_requests": 76,
+    "total_prs_merged": 70,
+    "pr_merge_rate": 92.11,
+    "total_story_points": 137,
+    "total_features_delivered": 42,
+    "average_story_points_per_agent": 27.4
+  },
+  "collaboration_metrics": {
+    "total_code_reviews": 90,
+    "total_documentation": 0,
+    "total_mentoring_sessions": 5,
+    "total_pair_programming": 8,
+    "total_blockers_resolved": 8,
+    "average_collaboration_score": 8.73,
+    "collaboration_health": "Excellent"
+  },
+  "team_balance": {
+    "role_distribution": {
+      "Project_Manager": 1,
+      "Frontend_Developer": 1,
+      "Backend_Developer": 1,
+      "QA_Engineer": 1,
+      "DevOps_Engineer": 1
+    },
+    "team_size": 5,
+    "average_team_score": 88.46,
+    "score_variance": 23.76,
+    "is_balanced": true
+  },
+  "top_performers": [
+    {
+      "agent_id": "A003",
+      "agent_role": "Backend_Developer",
+      "overall_score": 91.87,
+      "rating": "Excellent"
+    },
+    {
+      "agent_id": "A004",
+      "agent_role": "QA_Engineer",
+      "overall_score": 91.57,
+      "rating": "Excellent"
+    },
+    {
+      "agent_id": "A005",
+      "agent_role": "DevOps_Engineer",
+      "overall_score": 91.45,
+      "rating": "Excellent"
+    }
+  ],
+  "underperformers": [],
+  "team_health_status": "Excellent - Team is performing at a high level",
+  "recommendations": [
+    "Documentation contributions are low. Encourage more knowledge documentation and sharing."
+  ]
+}

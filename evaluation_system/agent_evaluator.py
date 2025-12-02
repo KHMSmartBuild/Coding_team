@@ -231,8 +231,8 @@ class AgentEvaluator:
                 'productivity': self.productivity_metrics.to_dict(),
                 'collaboration': self.collaboration_metrics.to_dict()
             },
-            'strengths': self._identify_strengths(),
-            'areas_for_improvement': self._identify_improvement_areas()
+            'strengths': self.identify_strengths(),
+            'areas_for_improvement': self.identify_improvement_areas()
         }
         
         # Store in history
@@ -240,7 +240,7 @@ class AgentEvaluator:
         
         return report
     
-    def _identify_strengths(self) -> List[str]:
+    def identify_strengths(self) -> List[str]:
         """Identify agent's strengths based on metrics"""
         strengths = []
         
@@ -264,7 +264,7 @@ class AgentEvaluator:
         
         return strengths
     
-    def _identify_improvement_areas(self) -> List[str]:
+    def identify_improvement_areas(self) -> List[str]:
         """Identify areas where agent needs improvement"""
         areas = []
         

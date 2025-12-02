@@ -250,7 +250,7 @@ class TeamEvaluator:
                 'agent_role': agent.agent_role,
                 'overall_score': agent.calculate_overall_score(),
                 'rating': agent.get_performance_rating(),
-                'improvement_areas': agent._identify_improvement_areas()
+                'improvement_areas': agent.identify_improvement_areas()
             }
             for agent in self.agents.values()
             if agent.calculate_overall_score() < threshold
