@@ -13,7 +13,7 @@ Example:
     >>> result = pm.initiate_project()
 """
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional
 
 # Try to import new core module; fall back to legacy imports if not available
 try:

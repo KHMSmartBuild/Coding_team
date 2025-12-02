@@ -126,6 +126,7 @@ try:
         Team_Collaboration,
     )
 except (ImportError, FileNotFoundError, Exception):
+    # Task script imports may fail due to missing dependencies or files; safe to ignore
     pass
 
 try:
@@ -135,6 +136,7 @@ try:
         System_Requirements_Analysis,
     )
 except (ImportError, Exception):
+    # Software architect task scripts are optional; ignore if not available
     pass
 
 try:
@@ -143,6 +145,7 @@ try:
         Usability_Analysis,
     )
 except (ImportError, Exception):
+    # Frontend developer task scripts are optional; ignore if not available
     pass
 
 try:
@@ -151,6 +154,7 @@ try:
         Database_Analysis,
     )
 except (ImportError, Exception):
+    # Backend developer task scripts are optional; ignore if not available
     pass
 
 try:
@@ -159,6 +163,7 @@ try:
         Data_Validation,
     )
 except (ImportError, Exception):
+    # Data engineer task scripts are optional; ignore if not available
     pass
 
 try:
@@ -167,6 +172,7 @@ try:
         Visualization_Creation,
     )
 except (ImportError, Exception):
+    # Data scientist task scripts are optional; ignore if not available
     pass
 
 try:
@@ -176,6 +182,7 @@ try:
         Model_Optimization,
     )
 except (ImportError, Exception):
+    # ML engineer task scripts are optional; ignore if not available
     pass
 
 try:
@@ -184,6 +191,7 @@ try:
         Monitoring_and_Alerting,
     )
 except (ImportError, Exception):
+    # DevOps engineer task scripts are optional; ignore if not available
     pass
 
 try:
@@ -192,6 +200,7 @@ try:
         Test_Plan_Creation,
     )
 except (ImportError, Exception):
+    # QA engineer task scripts are optional; ignore if not available
     pass
 
 try:
@@ -200,10 +209,12 @@ try:
         Security_Improvement_Recommendations,
     )
 except (ImportError, Exception):
+    # Security engineer task scripts are optional; ignore if not available
     pass
 
 # Docs imports with graceful fallback
 try:
     from docs import agent_dataset_requirements, data_augmentation_script, Tasks_status
 except (ImportError, Exception):
+    # Documentation scripts are optional; ignore if not available
     pass

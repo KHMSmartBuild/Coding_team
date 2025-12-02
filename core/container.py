@@ -10,9 +10,8 @@ Example:
     >>> config = container.resolve("config")
 """
 
-from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Callable, Dict, Optional, Type, TypeVar, Union
+from typing import Any, Callable, Dict, Optional, Type, TypeVar
 
 T = TypeVar("T")
 

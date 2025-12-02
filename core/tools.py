@@ -13,11 +13,11 @@ Example:
 """
 
 import inspect
-import json
+import re as regex_module
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union, get_type_hints
+from typing import Any, Callable, Dict, List, Optional, TypeVar, Union, get_type_hints
 
 T = TypeVar("T")
 
@@ -209,6 +209,8 @@ class FunctionTool(Tool):
         try:
             type_hints = get_type_hints(func)
         except Exception:
+            # Type hints may fail to resolve due to forward references, missing imports,
+            # or other issues. Fall back to treating all parameters as strings.
             pass
 
         for param_name, param in sig.parameters.items():
@@ -657,31 +659,37 @@ class ExecuteCodeTool(Tool):
         Raises:
             Exception: If code execution fails.
             ValueError: If code contains potentially dangerous operations.
+
+        Note:
+            The dangerous pattern check is a basic safety measure and not a
+            complete sandbox. It uses regex to detect common dangerous patterns
+            but may not catch all possible exploits.
         """
         # Check for potentially dangerous patterns when not in unsafe mode
         if not self.allow_unsafe:
+            # Use regex patterns to catch variations (tabs, newlines, etc.)
             dangerous_patterns = [
-                "import ",
-                "__import__",
-                "exec(",
-                "eval(",
-                "compile(",
-                "open(",
-                "file(",
-                "__builtins__",
-                "__class__",
-                "__bases__",
-                "__subclasses__",
-                "globals(",
-                "locals(",
-                "getattr(",
-                "setattr(",
-                "delattr(",
+                (r'\bimport\b', "import statement"),
+                (r'\b__import__\b', "__import__"),
+                (r'\bexec\s*\(', "exec()"),
+                (r'\beval\s*\(', "eval()"),
+                (r'\bcompile\s*\(', "compile()"),
+                (r'\bopen\s*\(', "open()"),
+                (r'\bfile\s*\(', "file()"),
+                (r'__builtins__', "__builtins__"),
+                (r'__class__', "__class__"),
+                (r'__bases__', "__bases__"),
+                (r'__subclasses__', "__subclasses__"),
+                (r'\bglobals\s*\(', "globals()"),
+                (r'\blocals\s*\(', "locals()"),
+                (r'\bgetattr\s*\(', "getattr()"),
+                (r'\bsetattr\s*\(', "setattr()"),
+                (r'\bdelattr\s*\(', "delattr()"),
             ]
-            for pattern in dangerous_patterns:
-                if pattern in code:
+            for pattern, name in dangerous_patterns:
+                if regex_module.search(pattern, code):
                     raise ValueError(
-                        f"Code contains potentially dangerous pattern: {pattern}"
+                        f"Code contains potentially dangerous pattern: {name}"
                     )
 
         # Create execution environment

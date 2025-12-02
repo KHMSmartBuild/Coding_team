@@ -8,7 +8,6 @@ import pytest
 from core.llm_provider import (
     AnthropicProvider,
     LLMConfig,
-    LLMProvider,
     LLMProviderError,
     LLMResponse,
     Message,

@@ -11,7 +11,7 @@ Example:
 """
 
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Union
+from typing import Optional
 
 
 def parse_datetime(
@@ -269,9 +269,8 @@ def end_of_day(dt: datetime) -> datetime:
         dt: The input datetime.
 
     Returns:
-        A datetime representing the last moment of the day (23:59:59.999999).
-        The microsecond value ensures this is the absolute last instant before
-        midnight of the next day.
+        A datetime representing the last representable instant of the day,
+        to microsecond precision as allowed by Python's datetime.
 
     Example:
         >>> from datetime import datetime
