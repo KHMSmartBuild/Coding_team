@@ -5,8 +5,8 @@ This module contains unit tests for the datetime manipulation utilities.
 """
 
 import pytest
-from datetime import datetime, timedelta
-from helpers.DtO import parse_datetime, format_datetime, time_since
+from datetime import datetime, timedelta, timezone
+from helpers.DtO import parse_datetime, format_datetime, time_since, get_current_utc_timestamp
 
 
 class TestParseDatetime:
@@ -184,6 +184,70 @@ class TestDatetimeOperationsIntegration:
         assert isinstance(elapsed, str)
         assert formatted == "2024-01-01"
         assert "1 day" in elapsed
+
+
+class TestGetCurrentUtcTimestamp:
+    """Test suite for get_current_utc_timestamp function."""
+    
+    def test_returns_string(self):
+        """Test that function returns a string."""
+        result = get_current_utc_timestamp()
+        assert isinstance(result, str)
+    
+    def test_iso_8601_format(self):
+        """Test that timestamp is in ISO 8601 format."""
+        result = get_current_utc_timestamp()
+        # ISO 8601 format should contain 'T' separator and timezone info
+        assert 'T' in result
+        assert '+' in result or 'Z' in result
+    
+    def test_contains_utc_timezone(self):
+        """Test that timestamp contains UTC timezone indicator."""
+        result = get_current_utc_timestamp()
+        # Should end with +00:00 for UTC timezone
+        assert result.endswith('+00:00') or result.endswith('Z')
+    
+    def test_parseable_timestamp(self):
+        """Test that returned timestamp can be parsed back to datetime."""
+        result = get_current_utc_timestamp()
+        # Should be parseable using fromisoformat
+        parsed = datetime.fromisoformat(result)
+        assert isinstance(parsed, datetime)
+        assert parsed.tzinfo is not None
+    
+    def test_returns_current_time(self):
+        """Test that function returns approximately current time."""
+        before = datetime.now(timezone.utc)
+        result = get_current_utc_timestamp()
+        after = datetime.now(timezone.utc)
+        
+        # Parse the result
+        parsed = datetime.fromisoformat(result)
+        
+        # Should be between before and after (allowing small time difference)
+        assert before <= parsed <= after
+    
+    def test_timestamp_has_timezone_info(self):
+        """Test that returned timestamp is timezone-aware."""
+        result = get_current_utc_timestamp()
+        parsed = datetime.fromisoformat(result)
+        
+        # Should have timezone info
+        assert parsed.tzinfo is not None
+        # Should be UTC (offset should be 0)
+        assert parsed.utcoffset().total_seconds() == 0
+    
+    def test_consistent_format_across_calls(self):
+        """Test that multiple calls return consistently formatted strings."""
+        result1 = get_current_utc_timestamp()
+        result2 = get_current_utc_timestamp()
+        
+        # Both should have the same structure (even if different times)
+        # Check that they both have T separator
+        assert 'T' in result1 and 'T' in result2
+        # Check that they both have timezone info
+        assert ('+00:00' in result1 or 'Z' in result1)
+        assert ('+00:00' in result2 or 'Z' in result2)
 
 
 if __name__ == "__main__":
