@@ -1,23 +1,25 @@
 """String Operations Module.
 
 This module provides utility functions for common string operations
-including case conversions, cleaning, and formatting.
+including case conversions, cleaning, formatting, and truncation.
 
 Typical usage example:
-    >>> from helpers.StrO import to_snake_case, to_camel_case, clean_string
+    >>> from helpers.StrO import to_snake_case, to_camel_case, clean_string, truncate
     >>> to_snake_case("MyVariableName")
     'my_variable_name'
     >>> to_camel_case("my_variable_name")
     'myVariableName'
+    >>> truncate("Hello, World!", 10)
+    'Hello, ...'
 
 Attributes:
     to_snake_case: Convert a string to snake_case.
     to_camel_case: Convert a string to camelCase.
     clean_string: Remove non-alphanumeric characters from a string.
+    truncate: Truncate a string to a maximum length with suffix.
 
 TODO(enhancement): Add to_pascal_case function.
 TODO(enhancement): Add to_kebab_case function.
-TODO(feature): Add string truncation with ellipsis.
 """
 
 import re
@@ -119,3 +121,45 @@ def clean_string(s: str, replace_with: str = " ") -> str:
         Only special characters (punctuation, symbols) are replaced.
     """
     return re.sub(r"[^\w\s]", replace_with, s)
+
+
+def truncate(s: str, max_length: int, suffix: str = "...") -> str:
+    """Truncate a string to a maximum length.
+
+    If the string exceeds the maximum length, it is truncated and
+    the suffix is appended.
+
+    Args:
+        s: The input string to truncate.
+        max_length: The maximum length of the output string
+            (including suffix). Must be non-negative.
+        suffix: The suffix to append if truncated. Defaults to "...".
+
+    Returns:
+        The truncated string with suffix if needed, or the original
+        string if it's within the maximum length.
+
+    Raises:
+        ValueError: If max_length is negative.
+        ValueError: If max_length is less than the length of suffix.
+
+    Example:
+        >>> truncate("Hello, World!", 10)
+        'Hello, ...'
+        >>> truncate("Hi", 10)
+        'Hi'
+        >>> truncate("Python Programming", 10, suffix="...")
+        'Python ...'
+
+    Note:
+        The max_length includes the suffix length. For example, with
+        max_length=10 and suffix="...", the actual text will be at most
+        7 characters long.
+    """
+    if max_length < 0:
+        raise ValueError("max_length must be non-negative")
+    if max_length < len(suffix):
+        raise ValueError("max_length must be at least the length of suffix")
+    if len(s) <= max_length:
+        return s
+    return s[: max_length - len(suffix)] + suffix
