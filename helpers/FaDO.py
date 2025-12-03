@@ -24,6 +24,9 @@ import os
 import shutil
 from pathlib import Path
 from typing import Optional, List
+from helpers.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 def create_directory(path: str) -> bool:
@@ -38,7 +41,10 @@ def create_directory(path: str) -> bool:
 
     Returns:
         True if the directory was created successfully or already exists,
-        False if an error occurred.
+        False if a known error occurred (PermissionError, OSError).
+
+    Raises:
+        Exception: For unexpected critical errors that should not be silently caught.
 
     Example:
         >>> create_directory("./my_project/data")
@@ -54,13 +60,16 @@ def create_directory(path: str) -> bool:
     """
     try:
         os.makedirs(path)
-        print(f"Directory '{path}' created.")
+        logger.info(f"Directory '{path}' created.")
         return True
     except FileExistsError:
-        print(f"Directory '{path}' already exists.")
+        logger.info(f"Directory '{path}' already exists.")
         return True
-    except Exception as e:
-        print(f"Error creating directory '{path}': {e}")
+    except PermissionError as e:
+        logger.error(f"Permission denied when creating directory '{path}': {e}")
+        return False
+    except OSError as e:
+        logger.error(f"OS error when creating directory '{path}': {e}")
         return False
 
 
@@ -75,7 +84,10 @@ def delete_directory(path: str) -> bool:
 
     Returns:
         True if the directory was deleted successfully,
-        False if an error occurred or directory not found.
+        False if directory not found or a known error occurred.
+
+    Raises:
+        Exception: For unexpected critical errors that should not be silently caught.
 
     Warning:
         This operation is destructive and cannot be undone. All files
@@ -95,13 +107,16 @@ def delete_directory(path: str) -> bool:
     """
     try:
         shutil.rmtree(path)
-        print(f"Directory '{path}' deleted.")
+        logger.info(f"Directory '{path}' deleted.")
         return True
     except FileNotFoundError:
-        print(f"Directory '{path}' not found.")
+        logger.warning(f"Directory '{path}' not found.")
         return False
-    except Exception as e:
-        print(f"Error deleting directory '{path}': {e}")
+    except PermissionError as e:
+        logger.error(f"Permission denied when deleting directory '{path}': {e}")
+        return False
+    except OSError as e:
+        logger.error(f"OS error when deleting directory '{path}': {e}")
         return False
 
 
@@ -117,7 +132,10 @@ def rename_directory(src: str, dest: str) -> bool:
 
     Returns:
         True if the directory was renamed successfully,
-        False if an error occurred.
+        False if directory not found or a known error occurred.
+
+    Raises:
+        Exception: For unexpected critical errors that should not be silently caught.
 
     Example:
         >>> rename_directory("./old_name", "./new_name")
@@ -130,13 +148,16 @@ def rename_directory(src: str, dest: str) -> bool:
     """
     try:
         shutil.move(src, dest)
-        print(f"Directory '{src}' renamed to '{dest}'.")
+        logger.info(f"Directory '{src}' renamed to '{dest}'.")
         return True
     except FileNotFoundError:
-        print(f"Directory '{src}' not found.")
+        logger.warning(f"Directory '{src}' not found.")
         return False
-    except Exception as e:
-        print(f"Error renaming directory '{src}' to '{dest}': {e}")
+    except PermissionError as e:
+        logger.error(f"Permission denied when renaming directory '{src}' to '{dest}': {e}")
+        return False
+    except OSError as e:
+        logger.error(f"OS error when renaming directory '{src}' to '{dest}': {e}")
         return False
 
 
@@ -151,7 +172,10 @@ def move_directory(src: str, dest: str) -> bool:
 
     Returns:
         True if the directory was moved successfully,
-        False if an error occurred.
+        False if directory not found or a known error occurred.
+
+    Raises:
+        Exception: For unexpected critical errors that should not be silently caught.
 
     Example:
         >>> move_directory("./data", "./backup/data")
@@ -164,13 +188,16 @@ def move_directory(src: str, dest: str) -> bool:
     """
     try:
         shutil.move(src, dest)
-        print(f"Directory '{src}' moved to '{dest}'.")
+        logger.info(f"Directory '{src}' moved to '{dest}'.")
         return True
     except FileNotFoundError:
-        print(f"Directory '{src}' not found.")
+        logger.warning(f"Directory '{src}' not found.")
         return False
-    except Exception as e:
-        print(f"Error moving directory '{src}' to '{dest}': {e}")
+    except PermissionError as e:
+        logger.error(f"Permission denied when moving directory '{src}' to '{dest}': {e}")
+        return False
+    except OSError as e:
+        logger.error(f"OS error when moving directory '{src}' to '{dest}': {e}")
         return False
 
 
@@ -186,6 +213,9 @@ def list_directory(path: str, recursive: bool = False) -> Optional[List[str]]:
     Returns:
         A list of file and directory names, or None if an error occurred.
 
+    Raises:
+        Exception: For unexpected critical errors that should not be silently caught.
+
     Example:
         >>> list_directory("./my_project")
         ['file1.py', 'file2.py', 'subdir']
@@ -195,15 +225,18 @@ def list_directory(path: str, recursive: bool = False) -> Optional[List[str]]:
     try:
         p = Path(path)
         if not p.exists():
-            print(f"Directory '{path}' not found.")
+            logger.warning(f"Directory '{path}' not found.")
             return None
 
         if recursive:
             return [str(f.relative_to(p)) for f in p.rglob("*") if f.is_file()]
         else:
             return [f.name for f in p.iterdir()]
-    except Exception as e:
-        print(f"Error listing directory '{path}': {e}")
+    except PermissionError as e:
+        logger.error(f"Permission denied when listing directory '{path}': {e}")
+        return None
+    except OSError as e:
+        logger.error(f"OS error when listing directory '{path}': {e}")
         return None
 
 
