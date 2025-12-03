@@ -5,7 +5,16 @@ This module contains unit tests for the string manipulation utilities.
 """
 
 import pytest
-from helpers.StrO import to_snake_case, to_camel_case, clean_string
+from helpers.StrO import (
+    to_snake_case,
+    to_camel_case,
+    to_pascal_case,
+    to_kebab_case,
+    clean_string,
+    truncate,
+    slugify,
+    is_empty_or_whitespace,
+)
 
 
 class TestToSnakeCase:
@@ -79,12 +88,21 @@ class TestToCamelCase:
         result = to_camel_case("myVariableName")
         assert result[0].islower()
     
+    def test_empty_string(self):
+        """Test with empty string - should return empty string."""
+        assert to_camel_case("") == ""
+    
+    def test_whitespace_only(self):
+        """Test with whitespace only - should return empty string."""
+        assert to_camel_case("   ") == ""
+    
     @pytest.mark.parametrize("input_str,expected", [
         ("simple_test", "simpleTest"),
         ("simple test", "simpleTest"),
         ("simple-test", "simpleTest"),
         ("simple", "simple"),
         ("simple_test_case", "simpleTestCase"),
+        ("", ""),
     ])
     def test_various_inputs(self, input_str, expected):
         """Test various input formats."""
@@ -146,6 +164,185 @@ class TestStringOperationsIntegration:
         snake = to_snake_case(cleaned)
         assert isinstance(snake, str)
         assert "_" in snake or snake.islower()
+
+
+class TestToPascalCase:
+    """Test suite for to_pascal_case function."""
+    
+    def test_simple_snake_case(self):
+        """Test simple snake_case to PascalCase conversion."""
+        assert to_pascal_case("hello_world") == "HelloWorld"
+    
+    def test_with_spaces(self):
+        """Test conversion with spaces."""
+        assert to_pascal_case("hello world") == "HelloWorld"
+    
+    def test_with_hyphens(self):
+        """Test conversion with hyphens."""
+        assert to_pascal_case("hello-world") == "HelloWorld"
+    
+    def test_empty_string(self):
+        """Test with empty string - should return empty string."""
+        assert to_pascal_case("") == ""
+    
+    def test_whitespace_only(self):
+        """Test with whitespace only - should return empty string."""
+        assert to_pascal_case("   ") == ""
+    
+    def test_single_word(self):
+        """Test single word conversion."""
+        result = to_pascal_case("hello")
+        assert result == "Hello"
+        assert result[0].isupper()
+    
+    @pytest.mark.parametrize("input_str,expected", [
+        ("hello_world", "HelloWorld"),
+        ("hello-world", "HelloWorld"),
+        ("hello world", "HelloWorld"),
+        ("helloWorld", "HelloWorld"),
+        ("", ""),
+    ])
+    def test_various_inputs(self, input_str, expected):
+        """Test various input formats."""
+        assert to_pascal_case(input_str) == expected
+
+
+class TestToKebabCase:
+    """Test suite for to_kebab_case function."""
+    
+    def test_simple_snake_case(self):
+        """Test simple snake_case to kebab-case conversion."""
+        assert to_kebab_case("hello_world") == "hello-world"
+    
+    def test_camel_case(self):
+        """Test camelCase to kebab-case conversion."""
+        assert to_kebab_case("helloWorld") == "hello-world"
+    
+    def test_pascal_case(self):
+        """Test PascalCase to kebab-case conversion."""
+        assert to_kebab_case("HelloWorld") == "hello-world"
+    
+    def test_with_spaces(self):
+        """Test conversion with spaces."""
+        assert to_kebab_case("Hello World") == "hello-world"
+    
+    @pytest.mark.parametrize("input_str,expected", [
+        ("hello_world", "hello-world"),
+        ("HelloWorld", "hello-world"),
+        ("helloWorld", "hello-world"),
+        ("hello world", "hello-world"),
+    ])
+    def test_various_inputs(self, input_str, expected):
+        """Test various input formats."""
+        assert to_kebab_case(input_str) == expected
+
+
+class TestTruncate:
+    """Test suite for truncate function."""
+    
+    def test_truncate_long_string(self):
+        """Test truncating a long string."""
+        result = truncate("Hello, World!", 10)
+        assert len(result) == 10
+        assert result == "Hello, ..."
+    
+    def test_no_truncate_short_string(self):
+        """Test that short strings are not truncated."""
+        result = truncate("Hi", 10)
+        assert result == "Hi"
+    
+    def test_custom_suffix(self):
+        """Test truncation with custom suffix."""
+        result = truncate("Hello, World!", 10, suffix="--")
+        assert len(result) == 10
+        assert result.endswith("--")
+    
+    def test_exact_length(self):
+        """Test string at exact max length."""
+        result = truncate("Hello", 5)
+        assert result == "Hello"
+    
+    def test_invalid_max_length(self):
+        """Test that ValueError is raised when max_length < suffix length."""
+        with pytest.raises(ValueError):
+            truncate("Hello", 2, suffix="...")
+    
+    @pytest.mark.parametrize("input_str,max_len,expected_len", [
+        ("Hello, World!", 10, 10),
+        ("Hi", 10, 2),
+        ("Test string here", 8, 8),
+    ])
+    def test_various_lengths(self, input_str, max_len, expected_len):
+        """Test various truncation scenarios."""
+        result = truncate(input_str, max_len)
+        assert len(result) == expected_len
+
+
+class TestSlugify:
+    """Test suite for slugify function."""
+    
+    def test_basic_slugify(self):
+        """Test basic slugify conversion."""
+        assert slugify("Hello World") == "hello-world"
+    
+    def test_remove_special_chars(self):
+        """Test removal of special characters."""
+        assert slugify("Hello, World!") == "hello-world"
+    
+    def test_multiple_spaces(self):
+        """Test handling of multiple spaces."""
+        result = slugify("Hello    World")
+        assert result == "hello-world"
+    
+    def test_mixed_case_and_special(self):
+        """Test mixed case with special characters."""
+        result = slugify("Python is Great!")
+        assert result == "python-is-great"
+    
+    @pytest.mark.parametrize("input_str,expected", [
+        ("Hello World", "hello-world"),
+        ("Hello, World!", "hello-world"),
+        ("Python is great", "python-is-great"),
+        ("Test@123", "test123"),
+    ])
+    def test_various_inputs(self, input_str, expected):
+        """Test various input formats."""
+        assert slugify(input_str) == expected
+
+
+class TestIsEmptyOrWhitespace:
+    """Test suite for is_empty_or_whitespace function."""
+    
+    def test_empty_string(self):
+        """Test with empty string."""
+        assert is_empty_or_whitespace("") is True
+    
+    def test_whitespace_only(self):
+        """Test with whitespace only."""
+        assert is_empty_or_whitespace("   ") is True
+        assert is_empty_or_whitespace("\t\n") is True
+    
+    def test_none_value(self):
+        """Test with None value."""
+        assert is_empty_or_whitespace(None) is True
+    
+    def test_non_empty_string(self):
+        """Test with non-empty string."""
+        assert is_empty_or_whitespace("hello") is False
+        assert is_empty_or_whitespace("  hello  ") is False
+    
+    @pytest.mark.parametrize("input_str,expected", [
+        ("", True),
+        ("   ", True),
+        ("\t", True),
+        ("\n", True),
+        (None, True),
+        ("hello", False),
+        ("  hello  ", False),
+    ])
+    def test_various_inputs(self, input_str, expected):
+        """Test various input formats."""
+        assert is_empty_or_whitespace(input_str) is expected
 
 
 if __name__ == "__main__":
