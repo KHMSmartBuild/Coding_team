@@ -1,462 +1,353 @@
 """
-Tools module for the Coding Team framework.
+Tools Framework Module.
 
-This module provides a framework for defining and registering tools that can
-be used by LLM agents. Tools are callable functions with metadata that allows
-LLMs to understand and invoke them appropriately.
+This module provides a framework for creating and managing tools that can be
+used by AI agents. It includes a registry, schema generation for OpenAI
+function-calling, and built-in coding tools.
 
 Example:
-    >>> from core.tools import Tool, ToolRegistry
-    >>> @Tool.define(name="search", description="Search the web")
-    ... def search_web(query: str) -> str:
-    ...     return f"Results for: {query}"
-    >>> registry = ToolRegistry()
-    >>> registry.register(search_web)
-
-Attributes:
-    Tool: Base class for tool definitions.
-    ToolRegistry: Registry for managing tools.
-    ToolResult: Dataclass for tool execution results.
-
-TODO(feature): Add support for async tool execution
-TODO(feature): Add support for tool input validation
-TODO(enhancement): Add tool usage analytics
+    >>> @tool(name="greet", description="Greet a person")
+    ... def greet(name: str) -> str:
+    ...     return f"Hello, {name}!"
+    >>> registry.register(greet)
 """
 
 import inspect
-import json
-import logging
-import re
+import re as regex_module
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Type, Union, get_type_hints
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, TypeVar, Union, get_type_hints
 
-# Use standard logging with fallback
-try:
-    from helpers.logging_config import get_logger
-    logger = get_logger(__name__)
-except ImportError:
-    logger = logging.getLogger(__name__)
+T = TypeVar("T")
+
+
+class ParameterType(Enum):
+    """Enumeration of parameter types for tool schemas.
+
+    Attributes:
+        STRING: String type.
+        INTEGER: Integer type.
+        NUMBER: Float/Number type.
+        BOOLEAN: Boolean type.
+        ARRAY: Array/List type.
+        OBJECT: Object/Dict type.
+    """
+
+    STRING = "string"
+    INTEGER = "integer"
+    NUMBER = "number"
+    BOOLEAN = "boolean"
+    ARRAY = "array"
+    OBJECT = "object"
 
 
 @dataclass
 class ToolParameter:
-    """Definition of a tool parameter.
-
-    This dataclass describes a single parameter for a tool, including
-    its type, description, and whether it's required.
+    """Describes a parameter for a tool.
 
     Attributes:
         name: The parameter name.
-        type: The parameter type as a string.
-        description: Human-readable description of the parameter.
+        param_type: The parameter type.
+        description: Description of the parameter.
         required: Whether the parameter is required.
         default: Default value if not required.
-        enum: List of allowed values (optional).
-
-    Example:
-        >>> param = ToolParameter(
-        ...     name='query',
-        ...     type='string',
-        ...     description='The search query',
-        ...     required=True
-        ... )
+        enum: List of allowed values.
     """
+
     name: str
-    type: str
+    param_type: ParameterType = ParameterType.STRING
     description: str = ""
     required: bool = True
-    default: Any = None
-    enum: Optional[List[Any]] = None
-
-    def to_json_schema(self) -> Dict[str, Any]:
-        """Convert parameter to JSON Schema format.
-
-        Returns:
-            Dictionary in JSON Schema format.
-        """
-        schema = {
-            "type": self.type,
-            "description": self.description
-        }
-        if self.enum:
-            schema["enum"] = self.enum
-        return schema
+    default: Optional[Any] = None
+    enum: Optional[List[str]] = None
 
 
 @dataclass
-class ToolResult:
-    """Result from tool execution.
-
-    This dataclass encapsulates the result of executing a tool,
-    including success status, output, and any error information.
+class ToolSchema:
+    """Schema definition for a tool.
 
     Attributes:
-        success: Whether the tool executed successfully.
-        output: The output from the tool.
-        error: Error message if execution failed.
-        tool_name: Name of the tool that was executed.
-        execution_time: Time taken to execute in seconds.
-        metadata: Additional metadata about the execution.
-
-    Example:
-        >>> result = ToolResult(
-        ...     success=True,
-        ...     output="File created successfully",
-        ...     tool_name="create_file"
-        ... )
+        name: The tool name.
+        description: Description of what the tool does.
+        parameters: List of tool parameters.
     """
-    success: bool
-    output: Any = None
-    error: Optional[str] = None
-    tool_name: str = ""
-    execution_time: float = 0.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert result to dictionary.
-
-        Returns:
-            Dictionary representation of the result.
-        """
-        return {
-            "success": self.success,
-            "output": self.output,
-            "error": self.error,
-            "tool_name": self.tool_name,
-            "execution_time": self.execution_time,
-            "metadata": self.metadata
-        }
-
-    def __str__(self) -> str:
-        """Return string representation.
-
-        Returns:
-            Human-readable result string.
-        """
-        if self.success:
-            return f"[{self.tool_name}] Success: {self.output}"
-        return f"[{self.tool_name}] Error: {self.error}"
+    name: str
+    description: str
+    parameters: List[ToolParameter] = field(default_factory=list)
 
 
 class Tool(ABC):
     """Abstract base class for tools.
 
-    Tools are callable objects that can be invoked by LLM agents to perform
-    specific tasks. Each tool has a name, description, and defined parameters.
-
-    Subclasses must implement:
-        - execute(): Execute the tool with given parameters
+    Tools can be executed by AI agents to perform specific tasks.
 
     Attributes:
         name: The tool name.
-        description: Human-readable description.
-        parameters: List of tool parameters.
+        description: Description of the tool.
+        schema: The tool schema.
 
     Example:
-        >>> class SearchTool(Tool):
-        ...     name = "search"
-        ...     description = "Search the web"
-        ...
-        ...     def execute(self, query: str) -> ToolResult:
-        ...         # Implementation
-        ...         return ToolResult(success=True, output="results")
+        >>> class MyTool(Tool):
+        ...     def execute(self, **kwargs):
+        ...         return "Result"
     """
 
-    name: str = ""
-    description: str = ""
-    parameters: List[ToolParameter] = []
-
-    def __init__(self) -> None:
-        """Initialize the tool."""
-        if not self.name:
-            self.name = self.__class__.__name__
-        logger.debug(f"Tool '{self.name}' initialized")
-
-    @abstractmethod
-    def execute(self, **kwargs: Any) -> ToolResult:
-        """Execute the tool.
-
-        Args:
-            **kwargs: Tool-specific parameters.
-
-        Returns:
-            ToolResult with execution outcome.
-        """
-        pass
-
-    def __call__(self, **kwargs: Any) -> ToolResult:
-        """Make the tool callable.
-
-        Args:
-            **kwargs: Tool parameters.
-
-        Returns:
-            ToolResult from execution.
-        """
-        import time
-        start_time = time.time()
-
-        try:
-            result = self.execute(**kwargs)
-            result.tool_name = self.name
-            result.execution_time = time.time() - start_time
-            logger.debug(f"Tool '{self.name}' executed in {result.execution_time:.3f}s")
-            return result
-        except Exception as e:
-            logger.error(f"Tool '{self.name}' failed: {e}")
-            return ToolResult(
-                success=False,
-                error=str(e),
-                tool_name=self.name,
-                execution_time=time.time() - start_time
-            )
-
-    def get_schema(self) -> Dict[str, Any]:
-        """Get the tool schema in OpenAI function calling format.
-
-        Returns:
-            Dictionary in OpenAI function schema format.
-        """
-        properties = {}
-        required = []
-
-        for param in self.parameters:
-            properties[param.name] = param.to_json_schema()
-            if param.required:
-                required.append(param.name)
-
-        return {
-            "type": "function",
-            "function": {
-                "name": self.name,
-                "description": self.description,
-                "parameters": {
-                    "type": "object",
-                    "properties": properties,
-                    "required": required
-                }
-            }
-        }
-
-    @staticmethod
-    def define(
+    def __init__(
+        self,
         name: str,
         description: str,
-        parameters: Optional[List[ToolParameter]] = None
-    ) -> Callable:
-        """Decorator to define a function as a tool.
-
-        This decorator converts a regular function into a Tool-compatible
-        callable with metadata.
+        parameters: Optional[List[ToolParameter]] = None,
+    ):
+        """Initialize the tool.
 
         Args:
             name: The tool name.
-            description: Human-readable description.
-            parameters: List of parameter definitions.
+            description: Description of the tool.
+            parameters: List of tool parameters.
+        """
+        self.name = name
+        self.description = description
+        self._parameters = parameters or []
+
+    @property
+    def schema(self) -> ToolSchema:
+        """Get the tool schema.
 
         Returns:
-            Decorator function.
-
-        Example:
-            >>> @Tool.define(
-            ...     name="calculator",
-            ...     description="Perform math calculations"
-            ... )
-            ... def calculate(expression: str) -> str:
-            ...     return str(eval(expression))
+            The tool schema.
         """
-        def decorator(func: Callable) -> 'FunctionTool':
-            return FunctionTool(
-                func=func,
-                name=name,
-                description=description,
-                parameters=parameters
-            )
-        return decorator
+        return ToolSchema(
+            name=self.name,
+            description=self.description,
+            parameters=self._parameters,
+        )
+
+    @abstractmethod
+    def execute(self, **kwargs: Any) -> Any:
+        """Execute the tool.
+
+        Args:
+            **kwargs: Tool-specific arguments.
+
+        Returns:
+            The tool execution result.
+        """
+        pass
+
+    def validate_parameters(self, **kwargs: Any) -> bool:
+        """Validate the provided parameters.
+
+        Args:
+            **kwargs: Parameters to validate.
+
+        Returns:
+            True if valid, raises ValueError otherwise.
+
+        Raises:
+            ValueError: If required parameters are missing.
+        """
+        for param in self._parameters:
+            if param.required and param.name not in kwargs:
+                if param.default is None:
+                    raise ValueError(f"Missing required parameter: {param.name}")
+        return True
 
 
 class FunctionTool(Tool):
-    """Tool wrapper for regular functions.
+    """Tool wrapper for Python functions.
 
-    This class wraps a regular Python function as a Tool, automatically
-    extracting parameter information from type hints and docstrings.
+    Wraps a Python function as a tool with automatic schema generation.
 
     Attributes:
         func: The wrapped function.
 
     Example:
-        >>> def my_func(x: int, y: int) -> int:
-        ...     return x + y
-        >>> tool = FunctionTool(my_func, name="add", description="Add numbers")
+        >>> def greet(name: str) -> str:
+        ...     return f"Hello, {name}!"
+        >>> tool = FunctionTool(greet, "greet", "Greet a person")
     """
 
     def __init__(
         self,
-        func: Callable,
-        name: str = "",
-        description: str = "",
-        parameters: Optional[List[ToolParameter]] = None
-    ) -> None:
+        func: Callable[..., Any],
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        parameters: Optional[List[ToolParameter]] = None,
+    ):
         """Initialize the function tool.
 
         Args:
             func: The function to wrap.
-            name: Tool name (defaults to function name).
-            description: Description (defaults to docstring).
-            parameters: Parameter definitions (auto-extracted if not provided).
+            name: Optional override for the tool name.
+            description: Optional override for the description.
+            parameters: Optional override for parameters.
         """
         self.func = func
-        self.name = name or func.__name__
-        self.description = description or (func.__doc__ or "").strip().split('\n')[0]
-        self.parameters = parameters or self._extract_parameters()
-        super().__init__()
+        tool_name = name or func.__name__
+        tool_description = description or func.__doc__ or ""
 
-    def _extract_parameters(self) -> List[ToolParameter]:
-        """Extract parameters from function signature.
+        # Auto-generate parameters if not provided
+        if parameters is None:
+            parameters = self._generate_parameters(func)
+
+        super().__init__(tool_name, tool_description.strip(), parameters)
+
+    def _generate_parameters(self, func: Callable[..., Any]) -> List[ToolParameter]:
+        """Generate parameters from function signature.
+
+        Args:
+            func: The function to analyze.
 
         Returns:
             List of ToolParameter objects.
         """
         params = []
-        sig = inspect.signature(self.func)
-        type_hints = get_type_hints(self.func) if hasattr(self.func, '__annotations__') else {}
+        sig = inspect.signature(func)
+        type_hints = {}
+        try:
+            type_hints = get_type_hints(func)
+        except Exception:
+            # Type hints may fail to resolve due to forward references, missing imports,
+            # or other issues. Fall back to treating all parameters as strings.
+            pass
 
         for param_name, param in sig.parameters.items():
-            if param_name in ('self', 'cls'):
+            if param_name in ("self", "cls"):
                 continue
 
-            param_type = type_hints.get(param_name, Any)
-            type_str = self._python_type_to_json_type(param_type)
+            param_type = self._python_type_to_param_type(
+                type_hints.get(param_name, str)
+            )
+            required = param.default is inspect.Parameter.empty
+            default = None if required else param.default
 
-            params.append(ToolParameter(
-                name=param_name,
-                type=type_str,
-                description=f"Parameter: {param_name}",
-                required=param.default == inspect.Parameter.empty,
-                default=None if param.default == inspect.Parameter.empty else param.default
-            ))
+            params.append(
+                ToolParameter(
+                    name=param_name,
+                    param_type=param_type,
+                    description=f"Parameter: {param_name}",
+                    required=required,
+                    default=default,
+                )
+            )
 
         return params
 
-    def _python_type_to_json_type(self, python_type: Type) -> str:
-        """Convert Python type to JSON Schema type.
+    def _python_type_to_param_type(self, python_type: type) -> ParameterType:
+        """Convert Python type to ParameterType.
 
         Args:
-            python_type: Python type annotation.
+            python_type: The Python type.
 
         Returns:
-            JSON Schema type string.
+            The corresponding ParameterType.
         """
         type_map = {
-            str: "string",
-            int: "integer",
-            float: "number",
-            bool: "boolean",
-            list: "array",
-            dict: "object",
-            type(None): "null",
+            str: ParameterType.STRING,
+            int: ParameterType.INTEGER,
+            float: ParameterType.NUMBER,
+            bool: ParameterType.BOOLEAN,
+            list: ParameterType.ARRAY,
+            dict: ParameterType.OBJECT,
         }
-        return type_map.get(python_type, "string")
+        return type_map.get(python_type, ParameterType.STRING)
 
-    def execute(self, **kwargs: Any) -> ToolResult:
+    def execute(self, **kwargs: Any) -> Any:
         """Execute the wrapped function.
 
         Args:
-            **kwargs: Function arguments.
+            **kwargs: Arguments to pass to the function.
 
         Returns:
-            ToolResult with function output.
+            The function result.
         """
-        try:
-            output = self.func(**kwargs)
-            return ToolResult(success=True, output=output)
-        except Exception as e:
-            logger.error(f"Function tool '{self.name}' execution failed: {e}")
-            return ToolResult(success=False, error=str(e))
+        self.validate_parameters(**kwargs)
+        return self.func(**kwargs)
+
+
+def tool(
+    name: Optional[str] = None,
+    description: Optional[str] = None,
+) -> Callable[[Callable[..., T]], FunctionTool]:
+    """Decorator to create a FunctionTool from a function.
+
+    Args:
+        name: Optional tool name override.
+        description: Optional description override.
+
+    Returns:
+        A decorator that creates a FunctionTool.
+
+    Example:
+        >>> @tool(name="greet", description="Greet someone")
+        ... def greet(name: str) -> str:
+        ...     return f"Hello, {name}!"
+    """
+
+    def decorator(func: Callable[..., T]) -> FunctionTool:
+        return FunctionTool(func, name=name, description=description)
+
+    return decorator
 
 
 class ToolRegistry:
     """Registry for managing tools.
 
-    The ToolRegistry provides a centralized location for registering,
-    discovering, and invoking tools. It supports tool categories and
-    provides methods to get tool schemas for LLM integration.
+    Provides registration, lookup, and schema generation for tools.
 
     Attributes:
-        tools: Dictionary of registered tools.
-        categories: Dictionary mapping categories to tool names.
+        _tools: Dictionary of registered tools.
 
     Example:
         >>> registry = ToolRegistry()
-        >>> registry.register(SearchTool())
-        >>> registry.register(CalculatorTool(), category="math")
-        >>> schemas = registry.get_all_schemas()
+        >>> registry.register(my_tool)
+        >>> result = registry.execute("my_tool", arg="value")
     """
 
-    def __init__(self) -> None:
-        """Initialize the tool registry."""
-        self.tools: Dict[str, Tool] = {}
-        self.categories: Dict[str, List[str]] = {}
-        logger.debug("ToolRegistry initialized")
+    def __init__(self):
+        """Initialize the registry."""
+        self._tools: Dict[str, Tool] = {}
 
-    def register(
-        self,
-        tool: Union[Tool, Callable],
-        category: str = "general"
-    ) -> 'ToolRegistry':
-        """Register a tool with the registry.
+    def register(self, tool: Union[Tool, Callable[..., Any]], **kwargs: Any) -> "ToolRegistry":
+        """Register a tool.
 
         Args:
             tool: The tool to register (Tool instance or callable).
-            category: Category for the tool.
+            **kwargs: Additional arguments for FunctionTool creation.
 
         Returns:
             The registry instance for method chaining.
 
         Raises:
-            ValueError: If tool name is already registered.
-
-        Example:
-            >>> registry.register(MyTool())
-            >>> registry.register(my_function, category="utilities")
+            ValueError: If a tool with the same name is already registered.
         """
-        if not isinstance(tool, Tool):
-            # Wrap callable as FunctionTool
-            tool = FunctionTool(tool)
+        if callable(tool) and not isinstance(tool, Tool):
+            tool = FunctionTool(tool, **kwargs)
 
-        if tool.name in self.tools:
-            logger.warning(f"Tool '{tool.name}' already registered, overwriting")
+        if tool.name in self._tools:
+            raise ValueError(f"Tool '{tool.name}' is already registered")
 
-        self.tools[tool.name] = tool
-
-        if category not in self.categories:
-            self.categories[category] = []
-        if tool.name not in self.categories[category]:
-            self.categories[category].append(tool.name)
-
-        logger.info(f"Registered tool '{tool.name}' in category '{category}'")
+        self._tools[tool.name] = tool
         return self
 
-    def unregister(self, name: str) -> bool:
-        """Remove a tool from the registry.
+    def unregister(self, name: str) -> "ToolRegistry":
+        """Unregister a tool.
 
         Args:
-            name: The name of the tool to remove.
+            name: The name of the tool to unregister.
 
         Returns:
-            True if tool was removed, False if not found.
+            The registry instance for method chaining.
+
+        Raises:
+            KeyError: If the tool is not registered.
         """
-        if name in self.tools:
-            del self.tools[name]
-            # Remove from categories
-            for category in self.categories.values():
-                if name in category:
-                    category.remove(name)
-            logger.info(f"Unregistered tool '{name}'")
-            return True
-        return False
+        if name not in self._tools:
+            raise KeyError(f"Tool '{name}' is not registered")
+        del self._tools[name]
+        return self
 
     def get(self, name: str) -> Optional[Tool]:
         """Get a tool by name.
@@ -465,90 +356,106 @@ class ToolRegistry:
             name: The tool name.
 
         Returns:
-            The Tool instance or None if not found.
+            The tool if found, None otherwise.
         """
-        return self.tools.get(name)
+        return self._tools.get(name)
 
-    def execute(self, name: str, **kwargs: Any) -> ToolResult:
+    def execute(self, name: str, **kwargs: Any) -> Any:
         """Execute a tool by name.
 
         Args:
             name: The tool name.
-            **kwargs: Tool parameters.
+            **kwargs: Arguments to pass to the tool.
 
         Returns:
-            ToolResult from execution.
+            The tool execution result.
 
         Raises:
-            KeyError: If tool is not found.
+            KeyError: If the tool is not registered.
         """
         tool = self.get(name)
-        if not tool:
-            logger.error(f"Tool '{name}' not found")
+        if tool is None:
             raise KeyError(f"Tool '{name}' is not registered")
-        return tool(**kwargs)
+        return tool.execute(**kwargs)
 
-    def list_tools(self, category: Optional[str] = None) -> List[str]:
+    def list_tools(self) -> List[str]:
         """List all registered tool names.
-
-        Args:
-            category: Optional category to filter by.
 
         Returns:
             List of tool names.
         """
-        if category:
-            return self.categories.get(category, [])
-        return list(self.tools.keys())
+        return list(self._tools.keys())
 
-    def list_categories(self) -> List[str]:
-        """List all categories.
-
-        Returns:
-            List of category names.
-        """
-        return list(self.categories.keys())
-
-    def get_schema(self, name: str) -> Optional[Dict[str, Any]]:
-        """Get the schema for a specific tool.
-
-        Args:
-            name: The tool name.
-
-        Returns:
-            Tool schema or None if not found.
-        """
-        tool = self.get(name)
-        return tool.get_schema() if tool else None
-
-    def get_all_schemas(
-        self,
-        category: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
-        """Get schemas for all tools.
-
-        Args:
-            category: Optional category to filter by.
+    def get_schemas(self) -> List[ToolSchema]:
+        """Get schemas for all registered tools.
 
         Returns:
             List of tool schemas.
         """
-        tool_names = self.list_tools(category)
-        return [self.tools[name].get_schema() for name in tool_names]
+        return [tool.schema for tool in self._tools.values()]
 
-    def to_openai_format(
-        self,
-        category: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
-        """Get all tools in OpenAI function calling format.
-
-        Args:
-            category: Optional category to filter by.
+    def to_openai_functions(self) -> List[Dict[str, Any]]:
+        """Generate OpenAI function-calling schema.
 
         Returns:
-            List of tool definitions for OpenAI API.
+            List of OpenAI function definitions.
+
+        Example:
+            >>> functions = registry.to_openai_functions()
+            >>> response = openai.chat.completions.create(
+            ...     model="gpt-4",
+            ...     functions=functions,
+            ...     ...
+            ... )
         """
-        return self.get_all_schemas(category)
+        functions = []
+        for tool in self._tools.values():
+            func_def = {
+                "type": "function",
+                "function": {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "parameters": {
+                        "type": "object",
+                        "properties": {},
+                        "required": [],
+                    },
+                },
+            }
+
+            for param in tool.schema.parameters:
+                prop = {
+                    "type": param.param_type.value,
+                    "description": param.description,
+                }
+                if param.enum:
+                    prop["enum"] = param.enum
+
+                func_def["function"]["parameters"]["properties"][param.name] = prop
+
+                if param.required:
+                    func_def["function"]["parameters"]["required"].append(param.name)
+
+            functions.append(func_def)
+
+        return functions
+
+    def to_openai_tools(self) -> List[Dict[str, Any]]:
+        """Alias for to_openai_functions.
+
+        Returns:
+            List of OpenAI tool definitions.
+        """
+        return self.to_openai_functions()
+
+    def clear(self) -> "ToolRegistry":
+        """Clear all registered tools.
+
+        Returns:
+            The registry instance for method chaining.
+        """
+        self._tools.clear()
+        return self
 
     def __contains__(self, name: str) -> bool:
         """Check if a tool is registered.
@@ -559,382 +466,341 @@ class ToolRegistry:
         Returns:
             True if registered, False otherwise.
         """
-        return name in self.tools
+        return name in self._tools
 
     def __len__(self) -> int:
         """Get the number of registered tools.
 
         Returns:
-            Number of tools.
+            The number of tools.
         """
-        return len(self.tools)
-
-    def __repr__(self) -> str:
-        """Return string representation.
-
-        Returns:
-            String showing number of tools.
-        """
-        return f"ToolRegistry(tools={len(self.tools)})"
+        return len(self._tools)
 
 
-# Built-in coding team tools
-# NOTE: These tools are designed for use with LLM agents
+# Built-in coding tools
 
 
-class CodeAnalysisTool(Tool):
-    """Tool for analyzing code quality and structure.
-
-    This tool provides code analysis capabilities including
-    complexity metrics, style checks, and structure analysis.
+class ReadFileTool(Tool):
+    """Tool for reading file contents.
 
     Example:
-        >>> tool = CodeAnalysisTool()
-        >>> result = tool(code="def foo(): pass", language="python")
+        >>> tool = ReadFileTool()
+        >>> content = tool.execute(path="file.py")
     """
 
-    name = "code_analysis"
-    description = "Analyze code for quality, complexity, and style issues"
-    parameters = [
-        ToolParameter(
-            name="code",
-            type="string",
-            description="The code to analyze",
-            required=True
-        ),
-        ToolParameter(
-            name="language",
-            type="string",
-            description="Programming language (python, javascript, etc.)",
-            required=False,
-            default="python"
-        ),
-        ToolParameter(
-            name="checks",
-            type="array",
-            description="Types of checks to perform",
-            required=False,
-            default=["style", "complexity"]
+    def __init__(self):
+        """Initialize the ReadFileTool."""
+        super().__init__(
+            name="read_file",
+            description="Read the contents of a file",
+            parameters=[
+                ToolParameter(
+                    name="path",
+                    param_type=ParameterType.STRING,
+                    description="The path to the file to read",
+                    required=True,
+                ),
+                ToolParameter(
+                    name="encoding",
+                    param_type=ParameterType.STRING,
+                    description="The file encoding (default: utf-8)",
+                    required=False,
+                    default="utf-8",
+                ),
+            ],
         )
-    ]
 
-    def execute(self, **kwargs: Any) -> ToolResult:
-        """Execute code analysis.
+    def execute(self, path: str, encoding: str = "utf-8", **kwargs: Any) -> str:
+        """Read file contents.
 
         Args:
-            code: The code to analyze.
-            language: Programming language.
-            checks: Types of checks to perform.
+            path: The file path.
+            encoding: The file encoding.
+            **kwargs: Additional arguments (ignored).
 
         Returns:
-            ToolResult with analysis results.
+            The file contents.
+
+        Raises:
+            FileNotFoundError: If the file does not exist.
         """
-        code = kwargs.get("code", "")
-        language = kwargs.get("language", "python")
-        checks = kwargs.get("checks", ["style", "complexity"])
-
-        # Basic analysis
-        analysis = {
-            "language": language,
-            "lines": len(code.split('\n')),
-            "characters": len(code),
-            "checks_performed": checks,
-            "issues": []
-        }
-
-        # Simple style checks for Python
-        if language == "python" and "style" in checks:
-            lines = code.split('\n')
-            for i, line in enumerate(lines, 1):
-                if len(line) > 79:
-                    analysis["issues"].append({
-                        "type": "style",
-                        "line": i,
-                        "message": f"Line exceeds 79 characters ({len(line)})"
-                    })
-                if line.rstrip() != line:
-                    analysis["issues"].append({
-                        "type": "style",
-                        "line": i,
-                        "message": "Trailing whitespace"
-                    })
-
-        return ToolResult(
-            success=True,
-            output=analysis,
-            metadata={"total_issues": len(analysis["issues"])}
-        )
+        with open(path, "r", encoding=encoding) as f:
+            return f.read()
 
 
-class FileOperationTool(Tool):
-    """Tool for file operations.
-
-    This tool provides safe file operations including reading,
-    writing, and listing files.
-
-    Note:
-        Operations are restricted to allowed directories for security.
+class WriteFileTool(Tool):
+    """Tool for writing file contents.
 
     Example:
-        >>> tool = FileOperationTool()
-        >>> result = tool(operation="read", path="./file.txt")
+        >>> tool = WriteFileTool()
+        >>> tool.execute(path="file.py", content="print('hello')")
     """
 
-    name = "file_operation"
-    description = "Perform file operations (read, write, list)"
-    parameters = [
-        ToolParameter(
-            name="operation",
-            type="string",
-            description="Operation to perform",
-            required=True,
-            enum=["read", "write", "list", "exists"]
-        ),
-        ToolParameter(
-            name="path",
-            type="string",
-            description="File or directory path",
-            required=True
-        ),
-        ToolParameter(
-            name="content",
-            type="string",
-            description="Content to write (for write operation)",
-            required=False
+    def __init__(self):
+        """Initialize the WriteFileTool."""
+        super().__init__(
+            name="write_file",
+            description="Write content to a file",
+            parameters=[
+                ToolParameter(
+                    name="path",
+                    param_type=ParameterType.STRING,
+                    description="The path to the file to write",
+                    required=True,
+                ),
+                ToolParameter(
+                    name="content",
+                    param_type=ParameterType.STRING,
+                    description="The content to write",
+                    required=True,
+                ),
+                ToolParameter(
+                    name="encoding",
+                    param_type=ParameterType.STRING,
+                    description="The file encoding (default: utf-8)",
+                    required=False,
+                    default="utf-8",
+                ),
+            ],
         )
-    ]
 
-    def execute(self, **kwargs: Any) -> ToolResult:
-        """Execute file operation.
+    def execute(
+        self, path: str, content: str, encoding: str = "utf-8", **kwargs: Any
+    ) -> bool:
+        """Write content to a file.
 
         Args:
-            operation: The operation to perform.
-            path: File or directory path.
-            content: Content for write operation.
+            path: The file path.
+            content: The content to write.
+            encoding: The file encoding.
+            **kwargs: Additional arguments (ignored).
 
         Returns:
-            ToolResult with operation outcome.
+            True if successful.
+        """
+        with open(path, "w", encoding=encoding) as f:
+            f.write(content)
+        return True
+
+
+class ExecuteCodeTool(Tool):
+    """Tool for executing Python code.
+
+    WARNING: This tool executes arbitrary code. Use with caution.
+    By default, only safe builtins are available.
+
+    Example:
+        >>> tool = ExecuteCodeTool()
+        >>> result = tool.execute(code="result = 2 + 2")
+    """
+
+    # Safe builtins that don't allow dangerous operations
+    SAFE_BUILTINS = {
+        "abs": abs,
+        "all": all,
+        "any": any,
+        "bool": bool,
+        "dict": dict,
+        "enumerate": enumerate,
+        "filter": filter,
+        "float": float,
+        "int": int,
+        "len": len,
+        "list": list,
+        "map": map,
+        "max": max,
+        "min": min,
+        "print": print,
+        "range": range,
+        "round": round,
+        "set": set,
+        "sorted": sorted,
+        "str": str,
+        "sum": sum,
+        "tuple": tuple,
+        "type": type,
+        "zip": zip,
+        "True": True,
+        "False": False,
+        "None": None,
+    }
+
+    def __init__(self, allow_unsafe: bool = False):
+        """Initialize the ExecuteCodeTool.
+
+        Args:
+            allow_unsafe: If True, allows access to all builtins.
+                WARNING: Only set this to True in trusted environments.
+        """
+        super().__init__(
+            name="execute_code",
+            description="Execute Python code and return the result",
+            parameters=[
+                ToolParameter(
+                    name="code",
+                    param_type=ParameterType.STRING,
+                    description="The Python code to execute",
+                    required=True,
+                ),
+            ],
+        )
+        self.allow_unsafe = allow_unsafe
+
+    def execute(self, code: str, **kwargs: Any) -> Any:
+        """Execute Python code.
+
+        Args:
+            code: The Python code to execute.
+            **kwargs: Additional arguments (ignored).
+
+        Returns:
+            The execution result (value of 'result' variable).
+
+        Raises:
+            Exception: If code execution fails.
+            ValueError: If code contains potentially dangerous operations.
 
         Note:
-            Paths are validated to prevent directory traversal attacks.
-            Only relative paths or absolute paths within the current
-            working directory are allowed.
+            The dangerous pattern check is a basic safety measure and not a
+            complete sandbox. It uses regex to detect common dangerous patterns
+            but may not catch all possible exploits.
         """
-        import os
-        from pathlib import Path
-
-        operation = kwargs.get("operation")
-        path = kwargs.get("path")
-        content = kwargs.get("content", "")
-
-        # NOTE: Security - validate path to prevent directory traversal
-        if not path:
-            return ToolResult(
-                success=False,
-                error="Path is required"
-            )
-
-        # Check for null bytes (common injection technique)
-        if "\x00" in path:
-            return ToolResult(
-                success=False,
-                error="Invalid path: null bytes not allowed"
-            )
-
-        try:
-            file_path = Path(path)
-
-            # NOTE: For additional security in production, restrict to
-            # specific allowed directories:
-            # allowed_base = Path.cwd()
-            # resolved = file_path.resolve()
-            # if not str(resolved).startswith(str(allowed_base)):
-            #     return ToolResult(success=False, error="Path outside allowed directory")
-
-            if operation == "read":
-                if not file_path.exists():
-                    return ToolResult(
-                        success=False,
-                        error=f"File not found: {path}"
+        # Check for potentially dangerous patterns when not in unsafe mode
+        if not self.allow_unsafe:
+            # Use regex patterns to catch variations (tabs, newlines, etc.)
+            dangerous_patterns = [
+                (r'\bimport\b', "import statement"),
+                (r'\b__import__\b', "__import__"),
+                (r'\bexec\s*\(', "exec()"),
+                (r'\beval\s*\(', "eval()"),
+                (r'\bcompile\s*\(', "compile()"),
+                (r'\bopen\s*\(', "open()"),
+                (r'\bfile\s*\(', "file()"),
+                (r'__builtins__', "__builtins__"),
+                (r'__class__', "__class__"),
+                (r'__bases__', "__bases__"),
+                (r'__subclasses__', "__subclasses__"),
+                (r'\bglobals\s*\(', "globals()"),
+                (r'\blocals\s*\(', "locals()"),
+                (r'\bgetattr\s*\(', "getattr()"),
+                (r'\bsetattr\s*\(', "setattr()"),
+                (r'\bdelattr\s*\(', "delattr()"),
+            ]
+            for pattern, name in dangerous_patterns:
+                if regex_module.search(pattern, code):
+                    raise ValueError(
+                        f"Code contains potentially dangerous pattern: {name}"
                     )
-                return ToolResult(
-                    success=True,
-                    output=file_path.read_text()
-                )
 
-            elif operation == "write":
-                file_path.parent.mkdir(parents=True, exist_ok=True)
-                file_path.write_text(content)
-                return ToolResult(
-                    success=True,
-                    output=f"Written {len(content)} characters to {path}"
-                )
+        # Create execution environment
+        if self.allow_unsafe:
+            exec_globals = {"__builtins__": __builtins__}
+        else:
+            exec_globals = {"__builtins__": self.SAFE_BUILTINS}
 
-            elif operation == "list":
-                if not file_path.exists():
-                    return ToolResult(
-                        success=False,
-                        error=f"Directory not found: {path}"
-                    )
-                if file_path.is_file():
-                    return ToolResult(
-                        success=True,
-                        output=[str(file_path)]
-                    )
-                files = [str(f) for f in file_path.iterdir()]
-                return ToolResult(
-                    success=True,
-                    output=files
-                )
-
-            elif operation == "exists":
-                return ToolResult(
-                    success=True,
-                    output=file_path.exists()
-                )
-
-            else:
-                return ToolResult(
-                    success=False,
-                    error=f"Unknown operation: {operation}"
-                )
-
-        except Exception as e:
-            return ToolResult(
-                success=False,
-                error=str(e)
-            )
+        local_vars: Dict[str, Any] = {}
+        exec(code, exec_globals, local_vars)
+        return local_vars.get("result", None)
 
 
-class TestRunnerTool(Tool):
-    """Tool for running tests.
-
-    This tool provides test execution capabilities using pytest
-    or other test frameworks.
+class SearchCodeTool(Tool):
+    """Tool for searching code in files.
 
     Example:
-        >>> tool = TestRunnerTool()
-        >>> result = tool(test_path="tests/", framework="pytest")
+        >>> tool = SearchCodeTool()
+        >>> results = tool.execute(pattern="def main", directory="src/")
     """
 
-    name = "test_runner"
-    description = "Run tests using pytest or other frameworks"
-    parameters = [
-        ToolParameter(
-            name="test_path",
-            type="string",
-            description="Path to test file or directory",
-            required=True
-        ),
-        ToolParameter(
-            name="framework",
-            type="string",
-            description="Test framework to use",
-            required=False,
-            default="pytest",
-            enum=["pytest", "unittest"]
-        ),
-        ToolParameter(
-            name="verbose",
-            type="boolean",
-            description="Enable verbose output",
-            required=False,
-            default=False
+    def __init__(self):
+        """Initialize the SearchCodeTool."""
+        super().__init__(
+            name="search_code",
+            description="Search for patterns in code files",
+            parameters=[
+                ToolParameter(
+                    name="pattern",
+                    param_type=ParameterType.STRING,
+                    description="The pattern to search for",
+                    required=True,
+                ),
+                ToolParameter(
+                    name="directory",
+                    param_type=ParameterType.STRING,
+                    description="The directory to search in",
+                    required=False,
+                    default=".",
+                ),
+                ToolParameter(
+                    name="extensions",
+                    param_type=ParameterType.ARRAY,
+                    description="File extensions to search (e.g., ['.py', '.js'])",
+                    required=False,
+                    default=[".py"],
+                ),
+            ],
         )
-    ]
 
-    def execute(self, **kwargs: Any) -> ToolResult:
-        """Execute tests.
+    def execute(
+        self,
+        pattern: str,
+        directory: str = ".",
+        extensions: Optional[List[str]] = None,
+        **kwargs: Any,
+    ) -> List[Dict[str, Any]]:
+        """Search for patterns in code files.
 
         Args:
-            test_path: Path to tests.
-            framework: Test framework.
-            verbose: Enable verbose output.
+            pattern: The pattern to search for.
+            directory: The directory to search in.
+            extensions: File extensions to search.
+            **kwargs: Additional arguments (ignored).
 
         Returns:
-            ToolResult with test results.
+            List of matches with file, line number, and content.
         """
-        import subprocess
-        from pathlib import Path
+        import os
+        import re
 
-        test_path = kwargs.get("test_path", "tests/")
-        framework = kwargs.get("framework", "pytest")
-        verbose = kwargs.get("verbose", False)
+        if extensions is None:
+            extensions = [".py"]
 
-        # NOTE: Security - validate test_path to prevent command injection
-        # Only allow alphanumeric, underscores, hyphens, dots, and slashes
-        if not re.match(r'^[a-zA-Z0-9_\-./]+$', test_path):
-            return ToolResult(
-                success=False,
-                error="Invalid test_path: contains disallowed characters"
-            )
+        results = []
+        regex = re.compile(pattern)
 
-        # Normalize path and check for directory traversal attempts
-        normalized_path = Path(test_path).resolve()
-        if ".." in str(test_path):
-            return ToolResult(
-                success=False,
-                error="Invalid test_path: directory traversal not allowed"
-            )
+        for root, _, files in os.walk(directory):
+            for file in files:
+                if any(file.endswith(ext) for ext in extensions):
+                    filepath = os.path.join(root, file)
+                    try:
+                        with open(filepath, "r", encoding="utf-8") as f:
+                            for i, line in enumerate(f, 1):
+                                if regex.search(line):
+                                    results.append(
+                                        {
+                                            "file": filepath,
+                                            "line": i,
+                                            "content": line.strip(),
+                                        }
+                                    )
+                    except (IOError, UnicodeDecodeError):
+                        continue
 
-        try:
-            if framework == "pytest":
-                cmd = ["python", "-m", "pytest", test_path]
-                if verbose:
-                    cmd.append("-v")
-            else:
-                cmd = ["python", "-m", "unittest", "discover", "-s", test_path]
-                if verbose:
-                    cmd.append("-v")
-
-            # NOTE: shell=False is default but explicit for security
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=300,
-                shell=False
-            )
-
-            return ToolResult(
-                success=result.returncode == 0,
-                output={
-                    "stdout": result.stdout,
-                    "stderr": result.stderr,
-                    "returncode": result.returncode
-                },
-                error=result.stderr if result.returncode != 0 else None
-            )
-
-        except subprocess.TimeoutExpired:
-            return ToolResult(
-                success=False,
-                error="Test execution timed out"
-            )
-        except Exception as e:
-            return ToolResult(
-                success=False,
-                error=str(e)
-            )
+        return results
 
 
-def get_default_tools() -> ToolRegistry:
-    """Get a registry with default coding team tools.
+def create_default_registry() -> ToolRegistry:
+    """Create a registry with default coding tools.
 
     Returns:
-        ToolRegistry with pre-registered tools.
+        A ToolRegistry with built-in coding tools.
 
     Example:
-        >>> registry = get_default_tools()
-        >>> schemas = registry.get_all_schemas()
+        >>> registry = create_default_registry()
+        >>> content = registry.execute("read_file", path="main.py")
     """
     registry = ToolRegistry()
-    registry.register(CodeAnalysisTool(), category="analysis")
-    registry.register(FileOperationTool(), category="files")
-    registry.register(TestRunnerTool(), category="testing")
+    registry.register(ReadFileTool())
+    registry.register(WriteFileTool())
+    registry.register(ExecuteCodeTool())
+    registry.register(SearchCodeTool())
     return registry
-
-
-# FIXME(security): Add input sanitization for file operations
-# TODO(feature): Add git operations tool
-# TODO(feature): Add database query tool
