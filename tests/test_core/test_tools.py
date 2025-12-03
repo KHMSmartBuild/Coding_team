@@ -533,13 +533,37 @@ class TestBuiltInTools:
         result = tool.execute(code="result = 2 + 2")
         assert result == 4
 
-    def test_execute_code_tool_blocks_dangerous_patterns(self):
+    @pytest.mark.parametrize("code,expected_pattern", [
+        ("import os", "import statement"),
+        ("import sys", "import statement"),
+        ("from os import path", "import statement"),
+        ("__import__('os')", "__import__"),
+        ("exec('print(1)')", "exec()"),
+        ("eval('1+1')", "eval()"),
+        ("compile('x=1', 'test', 'exec')", "compile()"),
+        ("open('/etc/passwd')", "open()"),
+        ("open('file.txt', 'r')", "open()"),
+        ("file('data.txt')", "file()"),
+        ("x.__builtins__", "__builtins__"),
+        ("obj.__class__", "__class__"),
+        ("cls.__bases__", "__bases__"),
+        ("type.__subclasses__()", "__subclasses__"),
+        ("globals()", "globals()"),
+        ("locals()", "locals()"),
+        ("getattr(obj, 'attr')", "getattr()"),
+        ("setattr(obj, 'x', 1)", "setattr()"),
+        ("delattr(obj, 'x')", "delattr()"),
+    ])
+    def test_execute_code_tool_blocks_dangerous_patterns(self, code, expected_pattern):
         """Test ExecuteCodeTool blocks dangerous code patterns."""
         tool = ExecuteCodeTool()
 
         with pytest.raises(ValueError) as exc_info:
-            tool.execute(code="import os")
-        assert "dangerous" in str(exc_info.value).lower()
+            tool.execute(code=code)
+        error_msg = str(exc_info.value).lower()
+        assert "dangerous" in error_msg, f"Expected 'dangerous' in error message for pattern: {expected_pattern}"
+        assert expected_pattern.lower() in error_msg or "pattern" in error_msg, \
+            f"Expected pattern '{expected_pattern}' to be mentioned in error message"
 
     def test_execute_code_tool_unsafe_mode(self):
         """Test ExecuteCodeTool in unsafe mode."""
