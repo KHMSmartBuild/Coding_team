@@ -4,22 +4,24 @@ This module provides utility functions for common datetime operations
 including parsing, formatting, and time interval calculations.
 
 Typical usage example:
-    >>> from helpers.DtO import parse_datetime, format_datetime, time_since
+    >>> from helpers.DtO import parse_datetime, format_datetime, time_since, get_current_utc_timestamp
     >>> dt = parse_datetime("2024-01-15 14:30:00")
     >>> formatted = format_datetime(dt, "%Y-%m-%d")
     >>> elapsed = time_since(dt)
+    >>> current_utc = get_current_utc_timestamp()
 
 Attributes:
     parse_datetime: Parse a datetime string into a datetime object.
     format_datetime: Format a datetime object into a string.
     time_since: Calculate time elapsed since a datetime.
+    get_current_utc_timestamp: Get the current UTC timestamp in ISO 8601 format.
 
 TODO(enhancement): Add timezone support for parsing and formatting.
 TODO(enhancement): Add function for calculating datetime differences in various units.
 TODO(feature): Add support for relative time strings like "2 days ago".
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 
@@ -106,3 +108,24 @@ def time_since(dt: datetime, now: Optional[datetime] = None) -> str:
         now = datetime.now()
     delta = now - dt
     return str(delta)
+
+
+def get_current_utc_timestamp() -> str:
+    """Get the current UTC timestamp as an ISO 8601 string.
+
+    This function returns the current time in UTC timezone formatted as
+    an ISO 8601 string with timezone information (+00:00).
+
+    Returns:
+        The current UTC timestamp in ISO 8601 format (with timezone info).
+
+    Example:
+        >>> get_current_utc_timestamp()
+        '2024-01-15T10:30:00+00:00'
+
+    Note:
+        The returned timestamp always includes UTC timezone information.
+        Use this function when you need a standardized, timezone-aware
+        timestamp for logging, API responses, or database records.
+    """
+    return datetime.now(timezone.utc).isoformat()
