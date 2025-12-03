@@ -5,7 +5,7 @@ This module contains unit tests for the string manipulation utilities.
 """
 
 import pytest
-from helpers.StrO import to_snake_case, to_camel_case, clean_string
+from helpers.StrO import to_snake_case, to_camel_case, clean_string, truncate
 
 
 class TestToSnakeCase:
@@ -146,6 +146,70 @@ class TestStringOperationsIntegration:
         snake = to_snake_case(cleaned)
         assert isinstance(snake, str)
         assert "_" in snake or snake.islower()
+
+
+class TestTruncate:
+    """Test suite for truncate function."""
+    
+    def test_truncate_long_string(self):
+        """Test truncating a string longer than max_length."""
+        result = truncate("Hello, World!", 10)
+        assert result == "Hello, ..."
+        assert len(result) == 10
+    
+    def test_truncate_short_string(self):
+        """Test truncating a string shorter than max_length."""
+        result = truncate("Hi", 10)
+        assert result == "Hi"
+    
+    def test_truncate_exact_length(self):
+        """Test string exactly at max_length."""
+        result = truncate("1234567890", 10)
+        assert result == "1234567890"
+    
+    def test_truncate_custom_suffix(self):
+        """Test truncating with custom suffix."""
+        result = truncate("Python Programming", 10, suffix="…")
+        assert result == "Python Pr…"
+        assert len(result) == 10
+    
+    def test_truncate_empty_suffix(self):
+        """Test truncating with empty suffix."""
+        result = truncate("Hello, World!", 5, suffix="")
+        assert result == "Hello"
+    
+    def test_truncate_negative_max_length_raises_error(self):
+        """Test that negative max_length raises ValueError."""
+        with pytest.raises(ValueError) as exc_info:
+            truncate("Hello", -1)
+        assert "max_length must be non-negative" in str(exc_info.value)
+    
+    def test_truncate_max_length_less_than_suffix_raises_error(self):
+        """Test that max_length < len(suffix) raises ValueError."""
+        with pytest.raises(ValueError) as exc_info:
+            truncate("Hello", 2, suffix="...")
+        assert "max_length must be at least the length of suffix" in str(exc_info.value)
+    
+    def test_truncate_zero_max_length_with_empty_suffix(self):
+        """Test edge case: max_length=0 with empty suffix."""
+        result = truncate("Hello", 0, suffix="")
+        assert result == ""
+    
+    def test_truncate_preserves_multibyte_characters(self):
+        """Test truncating strings with multibyte characters."""
+        result = truncate("Hello 世界", 8)
+        assert len(result) == 8
+    
+    @pytest.mark.parametrize("input_str,max_len,suffix,expected", [
+        ("Hello, World!", 10, "...", "Hello, ..."),
+        ("Short", 20, "...", "Short"),
+        ("Exactly ten!", 12, "...", "Exactly ten!"),
+        ("Python", 6, "...", "Python"),
+        ("Programming", 8, "...", "Progr..."),
+    ])
+    def test_truncate_various_inputs(self, input_str, max_len, suffix, expected):
+        """Test various truncate scenarios."""
+        assert truncate(input_str, max_len, suffix) == expected
 
 
 if __name__ == "__main__":
