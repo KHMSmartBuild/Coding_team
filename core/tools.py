@@ -510,12 +510,12 @@ class ReadFileTool(Tool):
             ],
         )
 
-    def execute(self, path: str, encoding: str = "utf-8", **kwargs: Any) -> str:
+    def execute(self, **kwargs: Any) -> str:
         """Read file contents.
 
         Args:
             path: The file path.
-            encoding: The file encoding.
+            encoding: The file encoding (default: utf-8).
             **kwargs: Additional arguments (ignored).
 
         Returns:
@@ -524,6 +524,11 @@ class ReadFileTool(Tool):
         Raises:
             FileNotFoundError: If the file does not exist.
         """
+        path = kwargs.get("path")
+        if path is None:
+            raise ValueError("Missing required parameter: path")
+        encoding = kwargs.get("encoding", "utf-8")
+        
         with open(path, "r", encoding=encoding) as f:
             return f.read()
 
@@ -564,20 +569,26 @@ class WriteFileTool(Tool):
             ],
         )
 
-    def execute(
-        self, path: str, content: str, encoding: str = "utf-8", **kwargs: Any
-    ) -> bool:
+    def execute(self, **kwargs: Any) -> bool:
         """Write content to a file.
 
         Args:
             path: The file path.
             content: The content to write.
-            encoding: The file encoding.
+            encoding: The file encoding (default: utf-8).
             **kwargs: Additional arguments (ignored).
 
         Returns:
             True if successful.
         """
+        path = kwargs.get("path")
+        content = kwargs.get("content")
+        if path is None:
+            raise ValueError("Missing required parameter: path")
+        if content is None:
+            raise ValueError("Missing required parameter: content")
+        encoding = kwargs.get("encoding", "utf-8")
+        
         with open(path, "w", encoding=encoding) as f:
             f.write(content)
         return True
@@ -646,7 +657,7 @@ class ExecuteCodeTool(Tool):
         )
         self.allow_unsafe = allow_unsafe
 
-    def execute(self, code: str, **kwargs: Any) -> Any:
+    def execute(self, **kwargs: Any) -> Any:
         """Execute Python code.
 
         Args:
@@ -665,9 +676,16 @@ class ExecuteCodeTool(Tool):
             complete sandbox. It uses regex to detect common dangerous patterns
             but may not catch all possible exploits.
         """
+        code = kwargs.get("code")
+        if code is None:
+            raise ValueError("Missing required parameter: code")
+        
         # Check for potentially dangerous patterns when not in unsafe mode
         if not self.allow_unsafe:
             # Use regex patterns to catch variations (tabs, newlines, etc.)
+            # Note: The '\bimport\b' pattern matches both regular import statements
+            # (e.g., 'import os') and from-import statements (e.g., 'from os import path').
+            # The pattern name "import statement" is used generically to cover both forms.
             dangerous_patterns = [
                 (r'\bimport\b', "import statement"),
                 (r'\b__import__\b', "__import__"),
@@ -740,24 +758,24 @@ class SearchCodeTool(Tool):
             ],
         )
 
-    def execute(
-        self,
-        pattern: str,
-        directory: str = ".",
-        extensions: Optional[List[str]] = None,
-        **kwargs: Any,
-    ) -> List[Dict[str, Any]]:
+    def execute(self, **kwargs: Any) -> List[Dict[str, Any]]:
         """Search for patterns in code files.
 
         Args:
             pattern: The pattern to search for.
-            directory: The directory to search in.
-            extensions: File extensions to search.
+            directory: The directory to search in (default: ".").
+            extensions: File extensions to search (default: [".py"]).
             **kwargs: Additional arguments (ignored).
 
         Returns:
             List of matches with file, line number, and content.
         """
+        pattern = kwargs.get("pattern")
+        if pattern is None:
+            raise ValueError("Missing required parameter: pattern")
+        directory = kwargs.get("directory", ".")
+        extensions = kwargs.get("extensions")
+        
         import os
         import re
 

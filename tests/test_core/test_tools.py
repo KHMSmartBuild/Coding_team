@@ -562,7 +562,7 @@ class TestBuiltInTools:
             tool.execute(code=code)
         error_msg = str(exc_info.value).lower()
         assert "dangerous" in error_msg, f"Expected 'dangerous' in error message for pattern: {expected_pattern}"
-        assert expected_pattern.lower() in error_msg or "pattern" in error_msg, \
+        assert expected_pattern.lower() in error_msg, \
             f"Expected pattern '{expected_pattern}' to be mentioned in error message"
 
     def test_execute_code_tool_unsafe_mode(self):
