@@ -528,7 +528,7 @@ class ReadFileTool(Tool):
         if path is None:
             raise ValueError("Missing required parameter: path")
         encoding = kwargs.get("encoding", "utf-8")
-        
+
         with open(path, "r", encoding=encoding) as f:
             return f.read()
 
@@ -588,7 +588,7 @@ class WriteFileTool(Tool):
         if content is None:
             raise ValueError("Missing required parameter: content")
         encoding = kwargs.get("encoding", "utf-8")
-        
+
         with open(path, "w", encoding=encoding) as f:
             f.write(content)
         return True
@@ -679,7 +679,7 @@ class ExecuteCodeTool(Tool):
         code = kwargs.get("code")
         if code is None:
             raise ValueError("Missing required parameter: code")
-        
+
         # Check for potentially dangerous patterns when not in unsafe mode
         if not self.allow_unsafe:
             # Use regex patterns to catch variations (tabs, newlines, etc.)
@@ -775,7 +775,7 @@ class SearchCodeTool(Tool):
             raise ValueError("Missing required parameter: pattern")
         directory = kwargs.get("directory", ".")
         extensions = kwargs.get("extensions")
-        
+
         import os
         import re
 
