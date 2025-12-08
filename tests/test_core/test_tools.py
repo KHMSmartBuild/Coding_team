@@ -14,6 +14,12 @@ from core.tools import (
     FunctionTool,
     CodeAnalysisTool,
     FileOperationTool,
+    ParameterType,
+    tool,
+    ReadFileTool,
+    WriteFileTool,
+    SearchCodeTool,
+    ExecuteCodeTool,
     get_default_tools,
 )
 
@@ -433,6 +439,244 @@ class TestGetDefaultTools:
         """Test default tools include test runner."""
         registry = get_default_tools()
         assert "test_runner" in registry
+
+    def test_default_tools_include_new_tools(self):
+        """Test default tools include newly added tools."""
+        registry = get_default_tools()
+        assert "read_file" in registry
+        assert "write_file" in registry
+        assert "search_code" in registry
+        assert "execute_code" in registry
+
+
+class TestParameterType:
+    """Test suite for ParameterType enum."""
+
+    def test_parameter_type_values(self):
+        """Test ParameterType enum has correct values."""
+        assert ParameterType.STRING.value == "string"
+        assert ParameterType.INTEGER.value == "integer"
+        assert ParameterType.NUMBER.value == "number"
+        assert ParameterType.BOOLEAN.value == "boolean"
+        assert ParameterType.ARRAY.value == "array"
+        assert ParameterType.OBJECT.value == "object"
+
+    def test_parameter_with_enum_type(self):
+        """Test ToolParameter with ParameterType enum."""
+        param = ToolParameter(
+            name="count",
+            type=ParameterType.INTEGER,
+            description="Number of items"
+        )
+        assert param.type == ParameterType.INTEGER
+        schema = param.to_json_schema()
+        assert schema["type"] == "integer"
+
+    def test_parameter_backward_compatibility(self):
+        """Test ToolParameter still accepts string types."""
+        param = ToolParameter(
+            name="query",
+            type="string",
+            description="Search query"
+        )
+        schema = param.to_json_schema()
+        assert schema["type"] == "string"
+
+
+class TestToolDecorator:
+    """Test suite for @tool decorator."""
+
+    def test_tool_decorator_with_name(self):
+        """Test @tool decorator with custom name."""
+        @tool(name="custom_name", description="Custom description")
+        def my_function(x: int) -> int:
+            return x * 2
+
+        assert isinstance(my_function, FunctionTool)
+        assert my_function.name == "custom_name"
+        assert my_function.description == "Custom description"
+
+    def test_tool_decorator_defaults(self):
+        """Test @tool decorator with default values."""
+        @tool()
+        def calculate(a: int, b: int) -> int:
+            """Calculate sum of two numbers."""
+            return a + b
+
+        assert calculate.name == "calculate"
+        assert "Calculate sum" in calculate.description
+
+    def test_tool_decorator_execution(self):
+        """Test executing tool created with @tool decorator."""
+        @tool(name="multiply")
+        def multiply(x: int, y: int) -> int:
+            return x * y
+
+        result = multiply(x=3, y=4)
+        assert result.success is True
+        assert result.output == 12
+
+
+class TestExecuteCodeTool:
+    """Test suite for ExecuteCodeTool with comprehensive security tests."""
+
+    def test_execute_code_tool_initialization(self):
+        """Test ExecuteCodeTool initializes correctly."""
+        tool = ExecuteCodeTool()
+        assert tool.name == "execute_code"
+        assert len(tool.DANGEROUS_PATTERNS) == 16
+
+    def test_execute_safe_code(self):
+        """Test executing safe Python code."""
+        tool = ExecuteCodeTool()
+        result = tool(code="x = 1 + 1")
+        assert result.success is True
+
+    def test_execute_code_with_print(self):
+        """Test executing code with print statement."""
+        tool = ExecuteCodeTool()
+        result = tool(code="print('Hello, World!')")
+        assert result.success is True
+        assert "Hello, World!" in result.output["stdout"]
+
+    # Parameterized tests for all 16 dangerous patterns
+    @pytest.mark.parametrize("code,expected_error", [
+        # 1. os module from import (checked first)
+        ("from os import path", "Importing from 'os' module is not allowed"),
+        # 2. os module import
+        ("import os", "Importing 'os' module is not allowed"),
+        # 3. sys module from import (checked first)
+        ("from sys import argv", "Importing from 'sys' module is not allowed"),
+        # 4. sys module import
+        ("import sys", "Importing 'sys' module is not allowed"),
+        # 5. subprocess module from import (checked first)
+        ("from subprocess import run", "Importing from 'subprocess' module is not allowed"),
+        # 6. subprocess module import
+        ("import subprocess", "Importing 'subprocess' module is not allowed"),
+        # 7. socket module from import (checked first)
+        ("from socket import socket", "Importing from 'socket' module is not allowed"),
+        # 8. socket module import
+        ("import socket", "Importing 'socket' module is not allowed"),
+        # 9. exec() function
+        ("exec('print(1)')", "Using 'exec()' is not allowed"),
+        # 10. eval() function
+        ("eval('1 + 1')", "Using 'eval()' is not allowed"),
+        # 11. compile() function
+        ("compile('x=1', '<string>', 'exec')", "Using 'compile()' is not allowed"),
+        # 12. __import__() function
+        ("__import__('os')", "Using '__import__()' is not allowed"),
+        # 13. open() function
+        ("open('file.txt', 'r')", "Using 'open()' is not allowed"),
+        # 14. globals() function
+        ("globals()", "Using 'globals()' is not allowed"),
+        # 15. locals() function
+        ("locals()", "Using 'locals()' is not allowed"),
+        # 16. vars() function
+        ("vars()", "Using 'vars()' is not allowed"),
+        # Additional test cases with variations
+        ("import os.path", "Importing 'os' module is not allowed"),
+        ("IMPORT OS", "Importing 'os' module is not allowed"),  # Case insensitive
+        ("x = eval('1+1')", "Using 'eval()' is not allowed"),
+    ])
+    def test_dangerous_patterns_blocked(self, code, expected_error):
+        """Test that all dangerous patterns are properly blocked."""
+        tool = ExecuteCodeTool()
+        result = tool(code=code)
+        assert result.success is False
+        assert expected_error in result.error
+
+    def test_execute_code_requires_code_parameter(self):
+        """Test that code parameter is required."""
+        tool = ExecuteCodeTool()
+        result = tool(code="")
+        assert result.success is False
+        assert "required" in result.error.lower()
+
+    def test_execute_code_with_error(self):
+        """Test executing code that raises an exception."""
+        tool = ExecuteCodeTool()
+        result = tool(code="x = 1 / 0")
+        assert result.success is False
+        assert "error" in result.error.lower()
+
+    def test_execute_code_restricted_builtins(self):
+        """Test that only safe builtins are available."""
+        tool = ExecuteCodeTool()
+        # Test that basic builtins work
+        result = tool(code="x = len([1, 2, 3])")
+        assert result.success is True
+
+
+class TestReadFileTool:
+    """Test suite for ReadFileTool."""
+
+    def test_read_file_tool_initialization(self):
+        """Test ReadFileTool initializes correctly."""
+        tool = ReadFileTool()
+        assert tool.name == "read_file"
+        assert len(tool.parameters) == 1
+
+    def test_read_file_requires_path(self):
+        """Test that path parameter is required."""
+        tool = ReadFileTool()
+        result = tool(path="")
+        assert result.success is False
+        assert "required" in result.error.lower()
+
+    def test_read_file_rejects_null_bytes(self):
+        """Test that null bytes in path are rejected."""
+        tool = ReadFileTool()
+        result = tool(path="/tmp/test\x00file.txt")
+        assert result.success is False
+        assert "null bytes" in result.error.lower()
+
+
+class TestWriteFileTool:
+    """Test suite for WriteFileTool."""
+
+    def test_write_file_tool_initialization(self):
+        """Test WriteFileTool initializes correctly."""
+        tool = WriteFileTool()
+        assert tool.name == "write_file"
+        assert len(tool.parameters) == 2
+
+    def test_write_file_requires_path(self):
+        """Test that path parameter is required."""
+        tool = WriteFileTool()
+        result = tool(path="", content="test")
+        assert result.success is False
+        assert "required" in result.error.lower()
+
+    def test_write_file_rejects_null_bytes(self):
+        """Test that null bytes in path are rejected."""
+        tool = WriteFileTool()
+        result = tool(path="/tmp/test\x00file.txt", content="test")
+        assert result.success is False
+        assert "null bytes" in result.error.lower()
+
+
+class TestSearchCodeTool:
+    """Test suite for SearchCodeTool."""
+
+    def test_search_code_tool_initialization(self):
+        """Test SearchCodeTool initializes correctly."""
+        tool = SearchCodeTool()
+        assert tool.name == "search_code"
+        assert len(tool.parameters) == 3
+
+    def test_search_code_requires_parameters(self):
+        """Test that pattern and path are required."""
+        tool = SearchCodeTool()
+        result = tool(pattern="", path="")
+        assert result.success is False
+        assert "required" in result.error.lower()
+
+    def test_search_code_invalid_regex(self):
+        """Test handling of invalid regex patterns."""
+        tool = SearchCodeTool()
+        result = tool(pattern="[invalid(", path="/tmp")
+        assert result.success is False
+        assert "regex" in result.error.lower()
 
 
 if __name__ == "__main__":
