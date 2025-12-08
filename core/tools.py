@@ -1235,23 +1235,19 @@ class ExecuteCodeTool(Tool):
     This tool provides controlled code execution capabilities with
     comprehensive security pattern detection to prevent dangerous operations.
     
-    The tool blocks 16 categories of dangerous patterns:
-    - os module imports
-    - sys module imports
-    - subprocess module imports
-    - socket module imports
+    The tool blocks 16 dangerous patterns across 8 categories:
+    - os module (import and from)
+    - sys module (import and from)
+    - subprocess module (import and from)
+    - socket module (import and from)
     - exec() function
     - eval() function
     - compile() function
     - __import__() function
     - open() function
-    - file operations
     - globals() function
     - locals() function
     - vars() function
-    - dir() function
-    - setattr() function
-    - delattr() function
     
     Example:
         >>> tool = ExecuteCodeTool()
@@ -1268,13 +1264,6 @@ class ExecuteCodeTool(Tool):
             type=ParameterType.STRING,
             description="Python code to execute",
             required=True
-        ),
-        ToolParameter(
-            name="timeout",
-            type=ParameterType.INTEGER,
-            description="Execution timeout in seconds",
-            required=False,
-            default=5
         )
     ]
     
@@ -1305,13 +1294,11 @@ class ExecuteCodeTool(Tool):
         
         Args:
             code: Python code to execute.
-            timeout: Execution timeout in seconds.
         
         Returns:
             ToolResult with execution outcome or security error.
         """
         code = kwargs.get("code", "")
-        timeout = kwargs.get("timeout", 5)
         
         if not code:
             return ToolResult(
@@ -1330,7 +1317,6 @@ class ExecuteCodeTool(Tool):
         # Execute code in a restricted environment
         try:
             import io
-            import sys
             from contextlib import redirect_stdout, redirect_stderr
             
             stdout_buffer = io.StringIO()
