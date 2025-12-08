@@ -1,0 +1,70 @@
+path,purpose,line_count,completeness_score,function_count,class_count,todo_count,placeholder_count,has_main
+/home/runner/work/Coding_team/Coding_team/__init__.py,Unknown,31,40,0,0,0,0,False
+/home/runner/work/Coding_team/Coding_team/my_library/__init__.py,Unknown,87,40,0,0,0,0,False
+/home/runner/work/Coding_team/Coding_team/helpers/StrO.py,Unknown,58,60,3,0,1,0,False
+/home/runner/work/Coding_team/Coding_team/helpers/code_documentation.py,Unknown,56,60,1,0,0,1,False
+/home/runner/work/Coding_team/Coding_team/helpers/environment_setup.py,Unknown,95,40,5,0,1,1,True
+/home/runner/work/Coding_team/Coding_team/helpers/database_migration.py,Unknown,77,40,3,0,1,1,True
+/home/runner/work/Coding_team/Coding_team/helpers/backup_restore.py,Unknown,75,60,2,0,1,0,False
+/home/runner/work/Coding_team/Coding_team/helpers/log_analysis.py,Unknown,83,40,3,0,1,1,True
+/home/runner/work/Coding_team/Coding_team/helpers/code_formatting_and_linting.py,Unknown,73,40,4,0,1,1,True
+/home/runner/work/Coding_team/Coding_team/helpers/performance_profiling.py,Unknown,77,40,2,0,1,1,True
+/home/runner/work/Coding_team/Coding_team/helpers/DtO.py,Unknown,69,60,3,0,1,0,False
+/home/runner/work/Coding_team/Coding_team/helpers/FaDO.py,Unknown,81,60,4,0,1,0,False
+/home/runner/work/Coding_team/Coding_team/helpers/__init__.py,Unknown,16,40,0,0,0,0,False
+/home/runner/work/Coding_team/Coding_team/helpers/unit_test_runner.py,Unknown,68,40,3,0,1,1,True
+/home/runner/work/Coding_team/Coding_team/helpers/api_testing.py,Unknown,61,20,2,0,2,1,False
+/home/runner/work/Coding_team/Coding_team/audits/generate_audit_report.py,Repository Audit Script,568,80,12,1,0,60,True
+/home/runner/work/Coding_team/Coding_team/docs/Tasks_status.py,Unknown,106,80,1,0,0,0,False
+/home/runner/work/Coding_team/Coding_team/docs/data_augmentation_script.py,Unknown,55,40,0,0,0,0,False
+/home/runner/work/Coding_team/Coding_team/docs/agent_dataset_requirements.py,Unknown,22,40,0,0,0,0,False
+/home/runner/work/Coding_team/Coding_team/docs/__init__.py,Unknown,1,40,0,0,0,0,False
+/home/runner/work/Coding_team/Coding_team/docs/CSV_docs/__init__.py,Unknown,1,40,0,0,0,0,False
+/home/runner/work/Coding_team/Coding_team/Agents/list_names.py,Unknown,21,60,1,0,0,0,False
+/home/runner/work/Coding_team/Coding_team/Agents/update_agent_init.py,Unknown,36,60,1,0,0,0,False
+/home/runner/work/Coding_team/Coding_team/Agents/__init__.py,Unknown,6,40,0,0,0,0,False
+/home/runner/work/Coding_team/Coding_team/Agents/A6_Data_Scientist/Agent_Data_Scientist.py,"This script is for the Data Scientist agent. It is responsible for analyzing data, developing machine learning models, and providing insights.",63,60,4,0,0,4,False
+/home/runner/work/Coding_team/Coding_team/Agents/A6_Data_Scientist/Model_Implementation.py,Unknown,43,40,3,1,0,2,False
+/home/runner/work/Coding_team/Coding_team/Agents/A6_Data_Scientist/Visualization_Creation.py,Unknown,43,20,3,1,1,4,False
+/home/runner/work/Coding_team/Coding_team/Agents/A6_Data_Scientist/__init__.py,Unknown,1,40,0,0,0,0,False
+/home/runner/work/Coding_team/Coding_team/Agents/A5_Data_Engineer/Data_Validation.py,Unknown,47,20,4,2,2,2,False
+/home/runner/work/Coding_team/Coding_team/Agents/A5_Data_Engineer/Data_Pipeline_Implementation.py,Unknown,44,20,4,1,2,2,False
+/home/runner/work/Coding_team/Coding_team/Agents/A5_Data_Engineer/Agent_Data_Engineer.py,"This script is for the Data Engineer agent. It is responsible for preparing, processing, and managing data for analysis and machine learning.",59,60,4,0,0,4,False
+/home/runner/work/Coding_team/Coding_team/Agents/A5_Data_Engineer/__init__.py,Unknown,1,40,0,0,0,0,False
+/home/runner/work/Coding_team/Coding_team/Agents/A2_Software_Architect/Bottleneck_Identification.py,Unknown,52,40,5,1,0,1,False
+/home/runner/work/Coding_team/Coding_team/Agents/A2_Software_Architect/System_Requirements_Analysis.py,Unknown,24,40,5,1,4,0,False
+/home/runner/work/Coding_team/Coding_team/Agents/A2_Software_Architect/Agent_Software_Architect.py,This script is for the Software Architect agent. It is responsible for designing the overall software architecture and ensuring it aligns with project goals and constraints.,59,60,4,0,0,6,False
+/home/runner/work/Coding_team/Coding_team/Agents/A2_Software_Architect/Code_Quality_Analysis.py,Unknown,56,40,5,1,1,1,False
+/home/runner/work/Coding_team/Coding_team/Agents/A2_Software_Architect/__init__.py,Unknown,1,40,0,0,0,0,False
+/home/runner/work/Coding_team/Coding_team/Agents/A1_Project_Manager/Change_Management.py,Unknown,51,20,6,1,5,1,False
+/home/runner/work/Coding_team/Coding_team/Agents/A1_Project_Manager/Risk_Analysis.py,Unknown,107,40,8,1,6,4,False
+/home/runner/work/Coding_team/Coding_team/Agents/A1_Project_Manager/Team_Collaboration.py,Unknown,104,40,19,4,0,1,False
+/home/runner/work/Coding_team/Coding_team/Agents/A1_Project_Manager/Agent_Project_Manager.py,"This script is for the Project Manager agent. It is responsible for overseeing the entire project, setting goals, and ensuring timely completion. The script also manages the AI agents, assigns tasks, ",97,60,6,0,0,1,False
+/home/runner/work/Coding_team/Coding_team/Agents/A1_Project_Manager/make_a_decision.py,Unknown,46,40,4,1,0,1,False
+/home/runner/work/Coding_team/Coding_team/Agents/A1_Project_Manager/Resource_Allocation.py,Unknown,89,20,8,1,2,1,False
+/home/runner/work/Coding_team/Coding_team/Agents/A1_Project_Manager/__init__.py,Unknown,1,40,0,0,0,0,False
+/home/runner/work/Coding_team/Coding_team/Agents/A3_Frontend_Developer/Agent_Frontend_Developer.py,This script is for the Frontend Developer agent. It is responsible for developing the user interface and user experience of web and mobile applications.,59,60,4,0,0,5,False
+/home/runner/work/Coding_team/Coding_team/Agents/A3_Frontend_Developer/Frontend_Test_Automation.py,Unknown,72,20,5,1,6,3,False
+/home/runner/work/Coding_team/Coding_team/Agents/A3_Frontend_Developer/Usability_Analysis.py,Unknown,62,20,4,1,4,1,False
+/home/runner/work/Coding_team/Coding_team/Agents/A3_Frontend_Developer/__init__.py,Unknown,1,40,0,0,0,0,False
+/home/runner/work/Coding_team/Coding_team/Agents/A9_Quality_Assurance_Engineer/Test_Plan_Creation.py,Unknown,47,40,3,2,0,4,False
+/home/runner/work/Coding_team/Coding_team/Agents/A9_Quality_Assurance_Engineer/Test_Execution_and_Reporting.py,Unknown,55,40,4,2,0,2,False
+/home/runner/work/Coding_team/Coding_team/Agents/A9_Quality_Assurance_Engineer/__init__.py,Unknown,1,40,0,0,0,0,False
+/home/runner/work/Coding_team/Coding_team/Agents/A9_Quality_Assurance_Engineer/Agent_Quality_Assurance_Engineer.py,This script is for the Quality Assurance Engineer agent. It is responsible for testing software components and ensuring they meet quality standards.,79,60,4,0,0,1,False
+/home/runner/work/Coding_team/Coding_team/Agents/A7_Machine_Learning_Engineer/Model_Deployment_API.py,Unknown,33,60,2,2,0,0,False
+/home/runner/work/Coding_team/Coding_team/Agents/A7_Machine_Learning_Engineer/Model_Optimization.py,Unknown,44,40,2,1,0,2,False
+/home/runner/work/Coding_team/Coding_team/Agents/A7_Machine_Learning_Engineer/__init__.py,Unknown,1,40,0,0,0,0,False
+/home/runner/work/Coding_team/Coding_team/Agents/A7_Machine_Learning_Engineer/Model_Deployment_Integration.py,Unknown,51,40,4,1,0,2,False
+/home/runner/work/Coding_team/Coding_team/Agents/A7_Machine_Learning_Engineer/Agent_Machine_Learning_Engineer.py,This script is for the Machine Learning Engineer agent. It is responsible for developing and deploying machine learning models and integrating them with applications.,76,60,4,0,0,1,False
+/home/runner/work/Coding_team/Coding_team/Agents/A8_DevOps_Engineer/Monitoring_and_Alerting.py,Unknown,134,40,5,2,1,3,False
+/home/runner/work/Coding_team/Coding_team/Agents/A8_DevOps_Engineer/Agent_DevOps_Engineer.py,"This script is for the DevOps Engineer agent. It is responsible for automating the deployment, scaling, and management of software applications.",77,60,4,0,0,1,False
+/home/runner/work/Coding_team/Coding_team/Agents/A8_DevOps_Engineer/Deployment_Automation.py,Unknown,40,40,3,1,0,2,False
+/home/runner/work/Coding_team/Coding_team/Agents/A8_DevOps_Engineer/__init__.py,Unknown,1,40,0,0,0,0,False
+/home/runner/work/Coding_team/Coding_team/Agents/A10_Security_Engineer/Security_Assessment.py,Unknown,50,20,4,2,1,3,False
+/home/runner/work/Coding_team/Coding_team/Agents/A10_Security_Engineer/Agent_Security_Engineer.py,This script is for the Security Engineer agent. It is responsible for ensuring the software and infrastructure are secure and follow industry best practices.,68,60,4,0,0,1,False
+/home/runner/work/Coding_team/Coding_team/Agents/A10_Security_Engineer/Security_Improvement_Recommendations.py,Unknown,53,40,4,2,0,2,False
+/home/runner/work/Coding_team/Coding_team/Agents/A10_Security_Engineer/__init__.py,Unknown,1,40,0,0,0,0,False
+/home/runner/work/Coding_team/Coding_team/Agents/A4_Backend_Developer/Backend_Test_Automation.py,Unknown,34,20,3,1,3,1,False
+/home/runner/work/Coding_team/Coding_team/Agents/A4_Backend_Developer/Agent_Backend_Developer.py,"This script is for the Backend Developer agent. It is responsible for implementing server-side logic, databases, and APIs for web and mobile applications.",59,60,4,0,0,5,False
+/home/runner/work/Coding_team/Coding_team/Agents/A4_Backend_Developer/Database_Analysis.py,Unknown,53,20,4,1,4,4,False
+/home/runner/work/Coding_team/Coding_team/Agents/A4_Backend_Developer/__init__.py,Unknown,1,40,0,0,0,0,False
