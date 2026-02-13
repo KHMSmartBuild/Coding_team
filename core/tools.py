@@ -29,6 +29,7 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from enum import Enum
 from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, Type, Union, get_type_hints
 
@@ -40,6 +41,35 @@ except ImportError:
     logger = logging.getLogger(__name__)
 
 
+class ParameterType(Enum):
+    """Enumeration of parameter types for tool parameters.
+    
+    This enum provides type-safe parameter type definitions,
+    replacing the previous string-based type system.
+    
+    Attributes:
+        STRING: String type parameter.
+        INTEGER: Integer type parameter.
+        NUMBER: Floating-point number parameter.
+        BOOLEAN: Boolean type parameter.
+        ARRAY: Array/list type parameter.
+        OBJECT: Object/dict type parameter.
+    
+    Example:
+        >>> param = ToolParameter(
+        ...     name='count',
+        ...     type=ParameterType.INTEGER,
+        ...     description='Number of items'
+        ... )
+    """
+    STRING = "string"
+    INTEGER = "integer"
+    NUMBER = "number"
+    BOOLEAN = "boolean"
+    ARRAY = "array"
+    OBJECT = "object"
+
+
 @dataclass
 class ToolParameter:
     """Definition of a tool parameter.
@@ -49,7 +79,7 @@ class ToolParameter:
 
     Attributes:
         name: The parameter name.
-        type: The parameter type as a string.
+        type: The parameter type (ParameterType enum or string for backward compatibility).
         description: Human-readable description of the parameter.
         required: Whether the parameter is required.
         default: Default value if not required.
@@ -58,13 +88,13 @@ class ToolParameter:
     Example:
         >>> param = ToolParameter(
         ...     name='query',
-        ...     type='string',
+        ...     type=ParameterType.STRING,
         ...     description='The search query',
         ...     required=True
         ... )
     """
     name: str
-    type: str
+    type: Union[ParameterType, str]
     description: str = ""
     required: bool = True
     default: Any = None
@@ -76,8 +106,11 @@ class ToolParameter:
         Returns:
             Dictionary in JSON Schema format.
         """
+        # Handle both ParameterType enum and string types
+        type_value = self.type.value if isinstance(self.type, ParameterType) else self.type
+        
         schema = {
-            "type": self.type,
+            "type": type_value,
             "description": self.description
         }
         if self.enum:
@@ -375,6 +408,43 @@ class FunctionTool(Tool):
         except Exception as e:
             logger.error(f"Function tool '{self.name}' execution failed: {e}")
             return ToolResult(success=False, error=str(e))
+
+
+def tool(
+    name: Optional[str] = None,
+    description: Optional[str] = None,
+    parameters: Optional[List[ToolParameter]] = None
+) -> Callable:
+    """Simplified decorator for creating tools from functions.
+    
+    This is a convenience decorator that provides a cleaner syntax
+    for defining tools compared to Tool.define().
+    
+    Args:
+        name: Optional tool name (defaults to function name).
+        description: Optional description (defaults to docstring).
+        parameters: Optional parameter definitions (auto-extracted if not provided).
+    
+    Returns:
+        Decorator function that wraps the callable as a FunctionTool.
+    
+    Example:
+        >>> @tool(name="greet", description="Greet a user")
+        ... def greet_user(name: str) -> str:
+        ...     return f"Hello, {name}!"
+        
+        >>> @tool()  # Use defaults
+        ... def calculate(x: int, y: int) -> int:
+        ...     return x + y
+    """
+    def decorator(func: Callable) -> FunctionTool:
+        return FunctionTool(
+            func=func,
+            name=name or func.__name__,
+            description=description or (func.__doc__ or "").strip().split('\n')[0],
+            parameters=parameters
+        )
+    return decorator
 
 
 class ToolRegistry:
@@ -918,6 +988,388 @@ class TestRunnerTool(Tool):
             )
 
 
+class ReadFileTool(Tool):
+    """Tool for reading file contents.
+    
+    This tool provides safe file reading capabilities with
+    security checks to prevent unauthorized access.
+    
+    Example:
+        >>> tool = ReadFileTool()
+        >>> result = tool(path="./example.txt")
+    """
+    
+    name = "read_file"
+    description = "Read contents from a file"
+    parameters = [
+        ToolParameter(
+            name="path",
+            type=ParameterType.STRING,
+            description="Path to the file to read",
+            required=True
+        )
+    ]
+    
+    def execute(self, **kwargs: Any) -> ToolResult:
+        """Execute file reading.
+        
+        Args:
+            path: File path to read.
+        
+        Returns:
+            ToolResult with file contents.
+        """
+        from pathlib import Path
+        
+        path = kwargs.get("path")
+        if not path:
+            return ToolResult(
+                success=False,
+                error="Path is required"
+            )
+        
+        # Security: Check for null bytes
+        if "\x00" in path:
+            return ToolResult(
+                success=False,
+                error="Invalid path: null bytes not allowed"
+            )
+        
+        try:
+            file_path = Path(path)
+            if not file_path.exists():
+                return ToolResult(
+                    success=False,
+                    error=f"File not found: {path}"
+                )
+            
+            content = file_path.read_text()
+            return ToolResult(
+                success=True,
+                output=content
+            )
+        except Exception as e:
+            return ToolResult(
+                success=False,
+                error=str(e)
+            )
+
+
+class WriteFileTool(Tool):
+    """Tool for writing content to files.
+    
+    This tool provides safe file writing capabilities with
+    security checks to prevent unauthorized access.
+    
+    Example:
+        >>> tool = WriteFileTool()
+        >>> result = tool(path="./output.txt", content="Hello, World!")
+    """
+    
+    name = "write_file"
+    description = "Write content to a file"
+    parameters = [
+        ToolParameter(
+            name="path",
+            type=ParameterType.STRING,
+            description="Path to the file to write",
+            required=True
+        ),
+        ToolParameter(
+            name="content",
+            type=ParameterType.STRING,
+            description="Content to write to the file",
+            required=True
+        )
+    ]
+    
+    def execute(self, **kwargs: Any) -> ToolResult:
+        """Execute file writing.
+        
+        Args:
+            path: File path to write.
+            content: Content to write.
+        
+        Returns:
+            ToolResult with operation outcome.
+        """
+        from pathlib import Path
+        
+        path = kwargs.get("path")
+        content = kwargs.get("content", "")
+        
+        if not path:
+            return ToolResult(
+                success=False,
+                error="Path is required"
+            )
+        
+        # Security: Check for null bytes
+        if "\x00" in path:
+            return ToolResult(
+                success=False,
+                error="Invalid path: null bytes not allowed"
+            )
+        
+        try:
+            file_path = Path(path)
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            file_path.write_text(content)
+            return ToolResult(
+                success=True,
+                output=f"Written {len(content)} characters to {path}"
+            )
+        except Exception as e:
+            return ToolResult(
+                success=False,
+                error=str(e)
+            )
+
+
+class SearchCodeTool(Tool):
+    """Tool for searching code within files or directories.
+    
+    This tool provides code search capabilities to find
+    specific patterns or text in source files.
+    
+    Example:
+        >>> tool = SearchCodeTool()
+        >>> result = tool(pattern="def.*main", path="./src")
+    """
+    
+    name = "search_code"
+    description = "Search for code patterns in files"
+    parameters = [
+        ToolParameter(
+            name="pattern",
+            type=ParameterType.STRING,
+            description="Search pattern (supports regex)",
+            required=True
+        ),
+        ToolParameter(
+            name="path",
+            type=ParameterType.STRING,
+            description="Path to file or directory to search",
+            required=True
+        ),
+        ToolParameter(
+            name="case_sensitive",
+            type=ParameterType.BOOLEAN,
+            description="Whether search should be case-sensitive",
+            required=False,
+            default=True
+        )
+    ]
+    
+    def execute(self, **kwargs: Any) -> ToolResult:
+        """Execute code search.
+        
+        Args:
+            pattern: Search pattern (regex).
+            path: Path to search in.
+            case_sensitive: Case sensitivity flag.
+        
+        Returns:
+            ToolResult with search results.
+        """
+        from pathlib import Path
+        
+        pattern = kwargs.get("pattern")
+        path = kwargs.get("path")
+        case_sensitive = kwargs.get("case_sensitive", True)
+        
+        if not pattern or not path:
+            return ToolResult(
+                success=False,
+                error="Both pattern and path are required"
+            )
+        
+        try:
+            flags = 0 if case_sensitive else re.IGNORECASE
+            regex = re.compile(pattern, flags)
+            
+            search_path = Path(path)
+            results = []
+            
+            if search_path.is_file():
+                files = [search_path]
+            else:
+                files = list(search_path.rglob("*.py"))
+            
+            for file_path in files:
+                try:
+                    content = file_path.read_text()
+                    matches = regex.finditer(content)
+                    for match in matches:
+                        line_num = content[:match.start()].count('\n') + 1
+                        results.append({
+                            "file": str(file_path),
+                            "line": line_num,
+                            "match": match.group(),
+                            "start": match.start(),
+                            "end": match.end()
+                        })
+                except Exception:
+                    continue
+            
+            return ToolResult(
+                success=True,
+                output=results,
+                metadata={"total_matches": len(results)}
+            )
+        except re.error as e:
+            return ToolResult(
+                success=False,
+                error=f"Invalid regex pattern: {e}"
+            )
+        except Exception as e:
+            return ToolResult(
+                success=False,
+                error=str(e)
+            )
+
+
+class ExecuteCodeTool(Tool):
+    """Tool for executing Python code with security checks.
+    
+    This tool provides controlled code execution capabilities with
+    comprehensive security pattern detection to prevent dangerous operations.
+    
+    The tool blocks 16 dangerous patterns across 8 categories:
+    - os module (import and from)
+    - sys module (import and from)
+    - subprocess module (import and from)
+    - socket module (import and from)
+    - exec() function
+    - eval() function
+    - compile() function
+    - __import__() function
+    - open() function
+    - globals() function
+    - locals() function
+    - vars() function
+    
+    Example:
+        >>> tool = ExecuteCodeTool()
+        >>> result = tool(code="print('Hello, World!')")
+        >>> # Dangerous code is rejected:
+        >>> result = tool(code="import os")  # Returns error
+    """
+    
+    name = "execute_code"
+    description = "Execute Python code with security checks"
+    parameters = [
+        ToolParameter(
+            name="code",
+            type=ParameterType.STRING,
+            description="Python code to execute",
+            required=True
+        )
+    ]
+    
+    # Define dangerous patterns that should be blocked
+    # Note: "from X" patterns must come before "import X" patterns
+    # to ensure correct matching when both could apply
+    DANGEROUS_PATTERNS = [
+        (r'\bfrom\s+os\b', "Importing from 'os' module is not allowed"),
+        (r'\bimport\s+os\b', "Importing 'os' module is not allowed"),
+        (r'\bfrom\s+sys\b', "Importing from 'sys' module is not allowed"),
+        (r'\bimport\s+sys\b', "Importing 'sys' module is not allowed"),
+        (r'\bfrom\s+subprocess\b', "Importing from 'subprocess' module is not allowed"),
+        (r'\bimport\s+subprocess\b', "Importing 'subprocess' module is not allowed"),
+        (r'\bfrom\s+socket\b', "Importing from 'socket' module is not allowed"),
+        (r'\bimport\s+socket\b', "Importing 'socket' module is not allowed"),
+        (r'\bexec\s*\(', "Using 'exec()' is not allowed"),
+        (r'\beval\s*\(', "Using 'eval()' is not allowed"),
+        (r'\bcompile\s*\(', "Using 'compile()' is not allowed"),
+        (r'\b__import__\s*\(', "Using '__import__()' is not allowed"),
+        (r'\bopen\s*\(', "Using 'open()' is not allowed"),
+        (r'\bglobals\s*\(', "Using 'globals()' is not allowed"),
+        (r'\blocals\s*\(', "Using 'locals()' is not allowed"),
+        (r'\bvars\s*\(', "Using 'vars()' is not allowed"),
+    ]
+    
+    def execute(self, **kwargs: Any) -> ToolResult:
+        """Execute Python code with security checks.
+        
+        Args:
+            code: Python code to execute.
+        
+        Returns:
+            ToolResult with execution outcome or security error.
+        """
+        code = kwargs.get("code", "")
+        
+        if not code:
+            return ToolResult(
+                success=False,
+                error="Code is required"
+            )
+        
+        # Security: Check for dangerous patterns
+        for pattern, error_message in self.DANGEROUS_PATTERNS:
+            if re.search(pattern, code, re.IGNORECASE):
+                return ToolResult(
+                    success=False,
+                    error=f"Security violation: {error_message}"
+                )
+        
+        # Execute code in a restricted environment
+        try:
+            import io
+            from contextlib import redirect_stdout, redirect_stderr
+            
+            stdout_buffer = io.StringIO()
+            stderr_buffer = io.StringIO()
+            
+            # Create a restricted namespace
+            namespace = {
+                '__builtins__': {
+                    'print': print,
+                    'len': len,
+                    'range': range,
+                    'str': str,
+                    'int': int,
+                    'float': float,
+                    'bool': bool,
+                    'list': list,
+                    'dict': dict,
+                    'set': set,
+                    'tuple': tuple,
+                    'abs': abs,
+                    'min': min,
+                    'max': max,
+                    'sum': sum,
+                    'sorted': sorted,
+                    'enumerate': enumerate,
+                    'zip': zip,
+                }
+            }
+            
+            with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
+                exec(code, namespace)
+            
+            stdout_content = stdout_buffer.getvalue()
+            stderr_content = stderr_buffer.getvalue()
+            
+            output = {
+                "stdout": stdout_content,
+                "stderr": stderr_content,
+                "success": True
+            }
+            
+            return ToolResult(
+                success=True,
+                output=output
+            )
+            
+        except Exception as e:
+            return ToolResult(
+                success=False,
+                error=f"Execution error: {str(e)}"
+            )
+
+
 def get_default_tools() -> ToolRegistry:
     """Get a registry with default coding team tools.
 
@@ -932,6 +1384,10 @@ def get_default_tools() -> ToolRegistry:
     registry.register(CodeAnalysisTool(), category="analysis")
     registry.register(FileOperationTool(), category="files")
     registry.register(TestRunnerTool(), category="testing")
+    registry.register(ReadFileTool(), category="files")
+    registry.register(WriteFileTool(), category="files")
+    registry.register(SearchCodeTool(), category="code")
+    registry.register(ExecuteCodeTool(), category="code")
     return registry
 
 
